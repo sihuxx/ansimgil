@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>안심길</title>
+<meta name="description" content="성남 은행동 어르신을 위한 덜 힘든 길 안내">
+<meta name="theme-color" content="#1F7A4D">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="안심길">
+<style>
+@font-face{font-family:'Pretendard';src:url(assets/PretendardVariable.woff2) format('woff2');font-weight:100 900;font-display:swap}
+body{margin:0;background:#EEF1EF}
+a{color:#1F7A4D}a:hover{color:#165C3A}
+button,input{font-family:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid #1F7A4D;outline-offset:2px}
+input::placeholder{color:#8A938D}
+html,body{height:100%;overflow:hidden}
+body{background:#FFFFFF;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+body.desktop{background:#EEF1EF}
+#app{position:absolute;top:0;left:0;width:390px;transform-origin:0 0;overflow:hidden}
+body.desktop #app{border-radius:28px;box-shadow:0 10px 40px rgba(25,31,28,.18)}
+#app > div{height:var(--app-h,844px) !important}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<template id="app-template">
+<div style="--fs: {{fs}}; width: 390px; height: var(--app-h, 844px); display: flex; flex-direction: column; background: #FFFFFF; font-family: 'Pretendard', system-ui, sans-serif; color: #191F1C; overflow: hidden; position: relative; letter-spacing: -0.01em">
+
+<!-- ═══ 01 시작 ═══ -->
+<sc-if value="{{isHome}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; height: var(--app-h, 844px)">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 14px">
+    <div style="display: flex; align-items: center; gap: 8px">
+      <img src="assets/logo.png" alt="" width="32" height="32" style="display: block; width: 32px; height: 32px">
+      <span style="font-size: calc(22px * var(--fs, 1)); font-weight: 800">안심길</span>
+    </div>
+    <button onClick="{{openSettings}}" aria-label="설정" style="width: 48px; height: 48px; border: none; background: transparent; border-radius: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#191F1C" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+    </button>
+  </div>
+  <div style="margin: 0 20px; border-radius: 18px; background: #F3F5F4; padding: 6px">
+    <button onClick="{{pickStart}}" style="width: 100%; height: 56px; border: none; background: transparent; display: flex; align-items: center; gap: 12px; padding: 0 12px; cursor: pointer; text-align: left">
+      <span style="width: 10px; height: 10px; border-radius: 5px; background: #191F1C; flex-shrink: 0"></span>
+      <span style="font-size: calc(15px * var(--fs, 1)); color: #6B756F; width: 32px">출발</span>
+      <span style="font-size: calc(18px * var(--fs, 1)); font-weight: 600; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">{{startName}}</span>
+    </button>
+    <div style="height: 1px; background: #E3E8E5; margin: 0 12px"></div>
+    <button onClick="{{pickDest}}" style="width: 100%; height: 56px; border: none; background: transparent; display: flex; align-items: center; gap: 12px; padding: 0 12px; cursor: pointer; text-align: left">
+      <span style="width: 10px; height: 10px; border-radius: 5px; background: #1F7A4D; flex-shrink: 0"></span>
+      <span style="font-size: calc(15px * var(--fs, 1)); color: #6B756F; width: 32px">도착</span>
+      <span style="font-size: calc(18px * var(--fs, 1)); font-weight: 600; color: #8A938D; flex: 1">어디로 가세요?</span>
+    </button>
+  </div>
+  <div style="position: relative; width: 390px; height: 220px; overflow: hidden; margin-top: 14px; flex-shrink: 0">
+    <img src="{{zoneMap}}" alt="{{zoneName}} 지도" style="position: absolute; left: 0; top: -40px; width: 390px; height: 300px; display: block">
+    <div style="position: absolute; left: 0; top: -40px; width: 390px; height: 300px">
+      <sc-for list="{{homeDots}}" as="m" hint-placeholder-count="6"><span style="{{m.style}}"></span></sc-for>
+    </div>
+    <span style="position: absolute; left: 12px; top: 10px; font-size: calc(13px * var(--fs, 1)); font-weight: 700; background: #FFFFFF; padding: 5px 10px; border-radius: 999px">{{zoneName}} · 갈 수 있는 곳 {{zoneCount}}곳</span>
+    <span style="position: absolute; right: 8px; bottom: 6px; font-size: calc(10px * var(--fs, 1)); color: #6B756F">© OpenStreetMap</span>
+  </div>
+  <div style="flex: 1; overflow-y: auto; padding: 18px 20px 24px">
+    <h2 style="margin: 0 0 10px; font-size: calc(16px * var(--fs, 1)); font-weight: 700; color: #6B756F">자주 가는 곳</h2>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+      <sc-for list="{{favs}}" as="f" hint-placeholder-count="3">
+        <button onClick="{{f.go}}" style="min-height: 92px; border: none; border-radius: 16px; background: #F3F5F4; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 12px; cursor: pointer; text-align: left">
+          <span style="width: 30px; height: 30px; border-radius: 15px; background: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="#1F7A4D" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"></path></svg></span>
+          <span style="font-size: calc(15px * var(--fs, 1)); font-weight: 700; line-height: 1.3; word-break: keep-all">{{f.name}}</span>
+        </button>
+      </sc-for>
+    </div>
+    <div style="margin: 22px 0 2px; display: flex; align-items: center; justify-content: space-between">
+      <h2 style="margin: 0; font-size: calc(16px * var(--fs, 1)); font-weight: 700; color: #6B756F">최근 검색</h2>
+      <sc-if value="{{hasRecent}}" hint-placeholder-val="{{ true }}"><button onClick="{{clearRecent}}" style="height: 36px; padding: 0 6px; border: none; background: transparent; font-size: calc(14px * var(--fs, 1)); color: #6B756F; cursor: pointer">모두 지우기</button></sc-if>
+    </div>
+    <sc-for list="{{recents}}" as="r" hint-placeholder-count="3">
+      <button onClick="{{r.go}}" style="width: 100%; height: 56px; border: none; border-bottom: 1px solid #EEF1EF; background: #FFFFFF; display: flex; align-items: center; gap: 12px; padding: 0 2px; cursor: pointer; text-align: left">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A938D" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path></svg>
+        <span style="font-size: calc(17px * var(--fs, 1)); font-weight: 600; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">{{r.name}}</span>
+        <span style="font-size: calc(14px * var(--fs, 1)); color: #8A938D">{{r.kind}}</span>
+      </button>
+    </sc-for>
+    <sc-if value="{{noRecent}}" hint-placeholder-val="{{ false }}"><p style="margin: 12px 0 0; font-size: calc(15px * var(--fs, 1)); color: #8A938D">최근 찾은 장소가 없어요</p></sc-if>
+  </div>
+</div>
+</sc-if>
+
+<!-- ═══ 장소 고르기 (출발/도착) ═══ -->
+<sc-if value="{{isPick}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; height: var(--app-h, 844px)">
+  <div style="display: flex; align-items: center; gap: 4px; padding: 12px 12px 8px">
+    <button onClick="{{pickBack}}" aria-label="뒤로" style="width: 48px; height: 48px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#191F1C" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+    <h1 style="margin: 0; font-size: calc(21px * var(--fs, 1)); font-weight: 800">{{pickTitle}}</h1>
+  </div>
+  <div style="margin: 0 20px 8px; height: 54px; border-radius: 14px; background: #F3F5F4; display: flex; align-items: center; gap: 10px; padding: 0 14px">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B756F" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+    <label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden">장소 검색</label>
+    <input id="q" value="{{q}}" onInput="{{onQ}}" placeholder="장소 이름 검색" style="flex: 1; border: none; background: transparent; font-size: calc(18px * var(--fs, 1)); color: #191F1C; outline: none; min-width: 0">
+  </div>
+  <div style="flex: 1; overflow-y: auto; padding: 4px 20px 20px">
+    <sc-if value="{{showGps}}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{useGps}}" style="width: 100%; min-height: 60px; border: none; border-bottom: 1px solid #EEF1EF; background: #FFFFFF; display: flex; align-items: center; gap: 12px; padding: 6px 2px; cursor: pointer; text-align: left">
+        <span style="width: 36px; height: 36px; border-radius: 18px; background: #EAF4EE; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F7A4D" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg></span>
+        <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: calc(18px * var(--fs, 1)); font-weight: 700; color: #1F7A4D">{{gpsLabel}}</span><span style="font-size: calc(13px * var(--fs, 1)); color: #6B756F">가장 가까운 장소를 출발지로 정해요</span></span>
+      </button>
+    </sc-if>
+    <sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+      <div style="padding: 14px 0 4px; font-size: calc(14px * var(--fs, 1)); font-weight: 700; color: #6B756F">{{g.title}}</div>
+      <sc-for list="{{g.items}}" as="p" hint-placeholder-count="4">
+        <button onClick="{{p.go}}" style="width: 100%; min-height: 58px; border: none; border-bottom: 1px solid #EEF1EF; background: #FFFFFF; display: flex; align-items: center; gap: 12px; padding: 6px 2px; cursor: pointer; text-align: left">
+          <span style="font-size: calc(18px * var(--fs, 1)); font-weight: 600; flex: 1">{{p.name}}</span>
+          <span style="font-size: calc(14px * var(--fs, 1)); color: #6B756F">{{p.kind}}</span>
+        </button>
+      </sc-for>
+    </sc-for>
+    <sc-if value="{{noResult}}" hint-placeholder-val="{{ false }}"><p style="margin: 24px 0; text-align: center; font-size: calc(17px * var(--fs, 1)); color: #6B756F">찾은 장소가 없어요. 이름을 다시 입력해 주세요.</p></sc-if>
+    <sc-if value="{{showZoneNote}}" hint-placeholder-val="{{ false }}"><p style="margin: 18px 0 0; font-size: calc(14px * var(--fs, 1)); color: #6B756F; line-height: 1.5">출발지와 같은 구역의 장소만 안내할 수 있어요. 다른 구역은 길 데이터를 연결하는 중이에요.</p></sc-if>
+  </div>
+</div>
+</sc-if>
+
+<!-- ═══ 03 길 찾는 중 ═══ -->
+<sc-if value="{{isLoading}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: var(--app-h, 844px); gap: 18px; padding: 0 32px; text-align: center">
+  <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" fill="none" stroke="#EAF4EE" stroke-width="7"></circle><path d="M32 6a26 26 0 0 1 26 26" fill="none" stroke="#1F7A4D" stroke-width="7" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 32 32" to="360 32 32" dur="0.9s" repeatCount="indefinite"></animateTransform></path></svg>
+  <span style="font-size: calc(22px * var(--fs, 1)); font-weight: 800">길을 찾고 있어요</span>
+  <span style="font-size: calc(17px * var(--fs, 1)); color: #6B756F">{{startName}} → {{destName}}</span>
+  <button onClick="{{cancelSearch}}" style="margin-top: 12px; height: 48px; padding: 0 22px; border: none; border-radius: 12px; background: #F3F5F4; font-size: calc(16px * var(--fs, 1)); font-weight: 600; color: #191F1C; cursor: pointer">취소</button>
+</div>
+</sc-if>
+
+<!-- ═══ 04 길찾기 결과 ═══ -->
+<sc-if value="{{isResult}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; height: var(--app-h, 844px); background: #FFFFFF">
+  <div style="display: flex; align-items: center; gap: 6px; padding: 10px 14px 10px 6px">
+    <button onClick="{{goHome}}" aria-label="뒤로" style="width: 44px; height: 48px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#191F1C" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+    <div style="flex: 1; min-width: 0; background: #FFFFFF; border: 1.5px solid #DCE3DF; border-radius: 16px; padding: 4px 14px; display: flex; flex-direction: column; position: relative">
+      <span style="position: absolute; left: 19px; top: 27px; height: 26px; border-left: 2px dotted #B5BDB8"></span>
+      <span style="display: flex; align-items: center; gap: 10px; min-height: 38px; min-width: 0; border-bottom: 1px solid #EEF1EF">
+        <span style="width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box; border: 3px solid #191F1C; background: #FFFFFF; flex-shrink: 0"></span>
+        <span style="font-size: calc(13px * var(--fs, 1)); font-weight: 700; color: #6B756F; width: 28px; flex-shrink: 0">출발</span>
+        <span style="font-size: calc(16px * var(--fs, 1)); font-weight: 600; color: #191F1C; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">{{startName}}</span>
+      </span>
+      <span style="display: flex; align-items: center; gap: 10px; min-height: 40px; min-width: 0">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #1F7A4D; box-shadow: 0 0 0 3px #EAF4EE; flex-shrink: 0"></span>
+        <span style="font-size: calc(13px * var(--fs, 1)); font-weight: 700; color: #1F7A4D; width: 28px; flex-shrink: 0">도착</span>
+        <span style="font-size: calc(17px * var(--fs, 1)); font-weight: 800; color: #191F1C; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">{{destName}}</span>
+      </span>
+    </div>
+  </div>
+  <div style="position: relative; width: 390px; height: 300px; flex-shrink: 0">
+    <img src="{{zoneMap}}" alt="{{mapAlt}}" style="position: absolute; left: 0; top: 0; width: 390px; height: 300px; display: block">
+    <svg viewBox="0 0 390 300" width="390" height="300" style="position: absolute; left: 0; top: 0" aria-hidden="true">
+      <path d="{{otherD}}" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"></path>
+      <path d="{{otherD}}" fill="none" stroke="#8A938D" stroke-width="4" stroke-dasharray="2 7" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="{{mainD}}" fill="none" stroke="{{mainGlow}}" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" opacity="0.18"></path>
+      <path d="{{mainD}}" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="{{mainD}}" fill="none" stroke="{{mainColor}}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path>
+      <circle cx="{{sx}}" cy="{{sy}}" r="8" fill="#191F1C" stroke="#FFFFFF" stroke-width="3"></circle>
+      <circle cx="{{ex}}" cy="{{ey}}" r="9" fill="#1F7A4D" stroke="#FFFFFF" stroke-width="3"></circle>
+      <g transform="{{b0.t}}" display="{{b0.disp}}">
+        <line x1="0" y1="0" x2="0" y2="-14" stroke="#4A524D" stroke-width="1.5"></line>
+        <rect x="{{b0.x}}" y="-38" width="{{b0.w}}" height="24" rx="12" fill="#FFFFFF" stroke="#C9CFCB" stroke-width="1" style="filter: drop-shadow(0 2px 3px rgba(25,31,28,0.12))"></rect>
+        <path transform="{{b0.iconT}}" display="{{b0.isStairs}}" d="M0 12h4V8h4V4h4V0h3" fill="none" stroke="#4A524D" stroke-width="1.8" stroke-linejoin="round"></path>
+        <path transform="{{b0.iconT}}" display="{{b0.isSlope}}" d="M0 12L15 2M0 12h15" fill="none" stroke="#4A524D" stroke-width="1.8" stroke-linecap="round"></path>
+        <g transform="{{b0.iconT}}" display="{{b0.isOther}}"><circle cx="7" cy="6" r="6" fill="none" stroke="#4A524D" stroke-width="1.8"></circle><path d="M7 3v3.5M7 9v.3" stroke="#4A524D" stroke-width="1.8" stroke-linecap="round"></path></g>
+        <text x="{{b0.tx}}" y="-21.5" font-size="12" font-weight="700" fill="#4A524D" style="font-family: 'Pretendard', sans-serif">{{b0.label}}</text>
+        <circle r="4" fill="#4A524D" stroke="#FFFFFF" stroke-width="2"></circle>
+      </g>
+      <g transform="{{b1.t}}" display="{{b1.disp}}">
+        <line x1="0" y1="0" x2="0" y2="-14" stroke="#4A524D" stroke-width="1.5"></line>
+        <rect x="{{b1.x}}" y="-38" width="{{b1.w}}" height="24" rx="12" fill="#FFFFFF" stroke="#C9CFCB" stroke-width="1" style="filter: drop-shadow(0 2px 3px rgba(25,31,28,0.12))"></rect>
+        <path transform="{{b1.iconT}}" display="{{b1.isStairs}}" d="M0 12h4V8h4V4h4V0h3" fill="none" stroke="#4A524D" stroke-width="1.8" stroke-linejoin="round"></path>
+        <path transform="{{b1.iconT}}" display="{{b1.isSlope}}" d="M0 12L15 2M0 12h15" fill="none" stroke="#4A524D" stroke-width="1.8" stroke-linecap="round"></path>
+        <g transform="{{b1.iconT}}" display="{{b1.isOther}}"><circle cx="7" cy="6" r="6" fill="none" stroke="#4A524D" stroke-width="1.8"></circle><path d="M7 3v3.5M7 9v.3" stroke="#4A524D" stroke-width="1.8" stroke-linecap="round"></path></g>
+        <text x="{{b1.tx}}" y="-21.5" font-size="12" font-weight="700" fill="#4A524D" style="font-family: 'Pretendard', sans-serif">{{b1.label}}</text>
+        <circle r="4" fill="#4A524D" stroke="#FFFFFF" stroke-width="2"></circle>
+      </g>
+      <g transform="{{safeT}}" display="{{safeDisp}}">
+          <rect x="-46" y="-13" width="92" height="26" rx="13" fill="#1F7A4D"></rect>
+          <path d="M-34 -1l4 4 7-8" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
+          <text x="-18" y="4.5" font-size="12.5" font-weight="800" fill="#FFFFFF" style="font-family: 'Pretendard', sans-serif">덜 힘든 길</text>
+        </g>
+    </svg>
+    <span style="position: absolute; right: 8px; bottom: 6px; font-size: calc(10px * var(--fs, 1)); color: #6B756F">© OpenStreetMap</span>
+  </div>
+  <div style="flex: 1; overflow-y: auto; margin-top: -16px; background: #FFFFFF; border-radius: 20px 20px 0 0; box-shadow: 0 -4px 16px rgba(25,31,28,0.08); position: relative">
+    <div style="width: 36px; height: 4px; border-radius: 2px; background: #D6DCD8; margin: 8px auto 4px"></div>
+    <div style="padding: 6px 20px 4px; font-size: calc(16px * var(--fs, 1)); font-weight: 700; color: #191F1C">{{routeHead}}</div>
+    <div style="display: flex; flex-direction: column; gap: 10px; padding: 6px 16px 8px">
+    <sc-for list="{{routeRows}}" as="r" hint-placeholder-count="3">
+      <button onClick="{{r.pick}}" aria-label="{{r.aria}}" style="{{r.style}}">
+        <span style="{{r.selBar}}"></span>
+        <span style="display: flex; align-items: center; gap: 6px">
+          <svg width="26" height="8" viewBox="0 0 26 8" aria-hidden="true"><line x1="2" y1="4" x2="24" y2="4" stroke="{{r.swColor}}" stroke-width="4" stroke-linecap="round" stroke-dasharray="{{r.swDash}}"></line></svg>
+          <span style="font-size: calc(15px * var(--fs, 1)); font-weight: 700; color: {{r.labelColor}}">{{r.label}}</span>
+          <sc-if value="{{r.rec}}" hint-placeholder-val="{{ false }}"><span style="font-size: calc(12px * var(--fs, 1)); font-weight: 700; color: #1F7A4D; background: #EAF4EE; padding: 2px 6px; border-radius: 5px">추천</span></sc-if>
+        </span>
+        <span style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap">
+          <span style="font-size: calc(30px * var(--fs, 1)); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; color: #191F1C">{{r.min}}<span style="font-size: calc(18px * var(--fs, 1)); font-weight: 700">분</span></span>
+          <span style="font-size: calc(15px * var(--fs, 1)); color: #4A524D; font-variant-numeric: tabular-nums">{{r.arr}}</span>
+          <span style="font-size: calc(15px * var(--fs, 1)); color: #8A938D; font-variant-numeric: tabular-nums">{{r.dist}}</span>
+        </span>
+        <sc-if value="{{r.showElev}}" hint-placeholder-val="{{ false }}">
+          <span style="display: flex; flex-direction: column; gap: 2px">
+            <svg viewBox="0 0 300 46" width="100%" height="46" preserveAspectRatio="none" aria-hidden="true" style="display: block"><path d="{{r.ev.areaD}}" fill="#EAF4EE"></path><path d="{{r.ev.knownD}}" fill="none" stroke="#1F7A4D" stroke-width="2" vector-effect="non-scaling-stroke"></path></svg>
+            <span style="font-size: calc(13px * var(--fs, 1)); color: #4A524D">{{r.ev.sum}}</span>
+          </span>
+        </sc-if>
+        <span style="display: flex; flex-wrap: wrap; gap: 5px">
+          <sc-for list="{{r.badges}}" as="b" hint-placeholder-count="1">
+              <span style="{{b.style}}">
+                <sc-if value="{{b.isAi}}" hint-placeholder-val="{{ false }}"><span style="font-size: calc(11px * var(--fs, 1)); font-weight: 900; background: #1F7A4D; color: #FFFFFF; border-radius: 4px; padding: 0 4px; letter-spacing: 0.02em">AI</span></sc-if>
+                <sc-if value="{{b.isGood}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+                <sc-if value="{{b.isStairs}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h5v-5h5v-5h5V5h3"></path></svg></sc-if>
+                <sc-if value="{{b.isSlope}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M3 19L21 7M3 19h18"></path></svg></sc-if>
+                <sc-if value="{{b.isCar}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5zM5 16v2M19 16v2"></path></svg></sc-if>
+                <sc-if value="{{b.isCross}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 4v16M9.5 4v16M14.5 4v16M19 4v16"></path></svg></sc-if>
+                <sc-if value="{{b.isLight}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M8 21h8M12 21V9M12 9c0-3 2-5 6-5"></path><path d="M16 4h4v3h-4z"></path></svg></sc-if>
+                <sc-if value="{{b.isRough}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M3 15l3-3 3 3 3-3 3 3 3-3 3 3"></path></svg></sc-if>
+                <sc-if value="{{b.isUnk}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17v.5"></path></svg></sc-if>
+                {{b.t}}
+              </span>
+          </sc-for>
+        </span>
+      </button>
+    </sc-for>
+    </div>
+    <sc-if value="{{hasWarn}}" hint-placeholder-val="{{ false }}">
+      <p style="margin: 12px 20px; font-size: calc(14px * var(--fs, 1)); color: #6B756F; display: flex; gap: 6px; align-items: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B756F" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16.5v.5"></path></svg>{{warn}}</p>
+    </sc-if>
+  </div>
+  <div style="padding: 10px 20px 24px; display: flex; gap: 10px; border-top: 1px solid #EEF1EF">
+    <button onClick="{{startNav}}" style="flex: 1; height: 58px; border: none; border-radius: 14px; background: #1F7A4D; color: #FFFFFF; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M12 2l7 19-7-4-7 4z"></path></svg>안내 시작</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ═══ 06 경로 상세 ═══ -->
+<sc-if value="{{isDetail}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; height: var(--app-h, 844px)">
+  <div style="display: flex; align-items: center; gap: 4px; padding: 10px 12px 6px">
+    <button onClick="{{backResult}}" aria-label="뒤로" style="width: 48px; height: 48px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#191F1C" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+    <div style="display: flex; flex-direction: column; min-width: 0">
+      <span style="font-size: calc(19px * var(--fs, 1)); font-weight: 800; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">{{destName}}</span>
+      <span style="font-size: calc(14px * var(--fs, 1)); color: #6B756F">{{chosenName}}</span>
+    </div>
+  </div>
+  <div style="flex: 1; overflow-y: auto">
+    <div style="padding: 4px 20px 16px; display: flex; flex-direction: column; gap: 4px">
+      <span style="display: flex; align-items: baseline; gap: 10px">
+        <span style="font-size: calc(34px * var(--fs, 1)); font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.02em">{{dMin}}<span style="font-size: calc(20px * var(--fs, 1)); font-weight: 700">분</span></span>
+        <span style="font-size: calc(16px * var(--fs, 1)); color: #4A524D; font-variant-numeric: tabular-nums">{{dArr}}</span>
+      </span>
+      <span style="font-size: calc(15px * var(--fs, 1)); color: #6B756F; font-variant-numeric: tabular-nums">{{dInfo}}</span>
+      <sc-if value="{{hasDetailBanner}}" hint-placeholder-val="{{ true }}">
+        <span style="display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: calc(15px * var(--fs, 1)); font-weight: 700; color: #1F7A4D"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#1F7A4D" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>{{detailBanner.t}}</span>
+      </sc-if>
+    </div>
+    <div style="height: 8px; background: #F3F5F4"></div>
+    <div style="padding: 16px 20px 14px">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 8px">
+        <h2 style="margin: 0; font-size: calc(17px * var(--fs, 1)); font-weight: 700">높이 변화</h2>
+        <span style="font-size: calc(14px * var(--fs, 1)); color: #4A524D; font-variant-numeric: tabular-nums">{{elev.sum}}</span>
+      </div>
+      <sc-if value="{{elev.has}}" hint-placeholder-val="{{ true }}">
+        <svg viewBox="0 0 350 120" width="350" height="120" style="display: block; margin-top: 8px" role="img" aria-label="{{elev.aria}}">
+          <line x1="8" x2="342" y1="{{elev.baseY}}" y2="{{elev.baseY}}" stroke="#DCE3DF" stroke-width="1" stroke-dasharray="3 4"></line>
+          <path d="{{elev.areaD}}" fill="#EAF4EE"></path>
+          <path d="{{elev.knownD}}" fill="none" stroke="#1F7A4D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+          <path d="{{elev.unkD}}" fill="none" stroke="#B5BDB8" stroke-width="2.5" stroke-dasharray="3 5" stroke-linecap="round"></path>
+          <line x1="{{elev.peakX}}" x2="{{elev.peakX}}" y1="{{elev.peakY}}" y2="{{elev.botY}}" stroke="#1F7A4D" stroke-width="1" stroke-dasharray="2 3" opacity="0.5"></line>
+          <circle cx="{{elev.peakX}}" cy="{{elev.peakY}}" r="4" fill="#1F7A4D" stroke="#FFFFFF" stroke-width="2"></circle>
+          <text x="{{elev.peakTX}}" y="{{elev.peakTY}}" text-anchor="middle" font-size="12" font-weight="700" fill="#1F7A4D" style="font-family: 'Pretendard', sans-serif">{{elev.peakLabel}}</text>
+          <text x="8" y="116" font-size="12" fill="#6B756F" style="font-family: 'Pretendard', sans-serif">출발</text>
+          <text x="342" y="116" text-anchor="end" font-size="12" fill="#6B756F" style="font-family: 'Pretendard', sans-serif">도착 {{elev.endLabel}}</text>
+        </svg>
+        <p style="margin: 6px 0 0; font-size: calc(12px * var(--fs, 1)); color: #8A938D">현장조사 경사 기록으로 계산한 출발 기준 높이{{elev.note}}</p>
+      </sc-if>
+      <sc-if value="{{elev.none}}" hint-placeholder-val="{{ false }}"><p style="margin: 10px 0 0; font-size: calc(15px * var(--fs, 1)); color: #6B756F">이 길은 아직 높이 정보가 없어요</p></sc-if>
+    </div>
+    <div style="height: 8px; background: #F3F5F4"></div>
+    <div style="padding: 16px 20px 10px">
+      <h2 style="margin: 0 0 4px; font-size: calc(17px * var(--fs, 1)); font-weight: 700">가는 길</h2>
+      <sc-for list="{{legs}}" as="g" hint-placeholder-count="4">
+      <div style="display: flex; gap: 14px; padding: 16px 0; border-bottom: {{g.border}}">
+        <span style="width: 32px; flex-shrink: 0; display: flex; justify-content: center; padding-top: 1px; color: {{g.iconColor}}">
+          <sc-if value="{{g.isUp}}" hint-placeholder-val="{{ false }}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"></path></svg></sc-if>
+          <sc-if value="{{g.isLeft}}" hint-placeholder-val="{{ false }}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20v-7a4 4 0 0 0-4-4H5M9 5L5 9l4 4"></path></svg></sc-if>
+          <sc-if value="{{g.isRight}}" hint-placeholder-val="{{ false }}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 20v-7a4 4 0 0 1 4-4h7M15 5l4 4-4 4"></path></svg></sc-if>
+          <sc-if value="{{g.isPin}}" hint-placeholder-val="{{ false }}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg></sc-if>
+        </span>
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: calc(18px * var(--fs, 1)); font-weight: 700; color: #191F1C">{{g.title}}</span>
+          <span style="font-size: calc(15px * var(--fs, 1)); color: #6B756F">{{g.sub}}</span>
+          <sc-if value="{{g.hasTags}}" hint-placeholder-val="{{ true }}"><span style="font-size: calc(15px * var(--fs, 1)); font-weight: 600; color: #1F7A4D">{{g.tags}}</span></sc-if>
+        </span>
+      </div>
+    </sc-for>
+      <p style="margin: 12px 0 0; font-size: calc(13px * var(--fs, 1)); color: #8A938D">{{trustLine}}</p>
+    </div>
+    <div style="height: 8px; background: #F3F5F4"></div>
+    <div style="padding: 16px 20px 14px">
+      <h2 style="margin: 0 0 8px; font-size: calc(17px * var(--fs, 1)); font-weight: 700">정보 출처</h2>
+      <sc-for list="{{sources}}" as="o" hint-placeholder-count="2">
+        <div style="display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid #EEF1EF">
+          <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: calc(16px * var(--fs, 1)); font-weight: 600">{{o.k}}</span><span style="font-size: calc(13px * var(--fs, 1)); color: #6B756F">{{o.src}}</span></span>
+          <span style="font-size: calc(16px * var(--fs, 1)); font-weight: 700; font-variant-numeric: tabular-nums">{{o.v}}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  <div style="padding: 10px 20px 24px; display: flex; gap: 10px; border-top: 1px solid #EEF1EF">
+    <button onClick="{{speak}}" aria-label="길 요약 듣기" style="width: 58px; height: 58px; border: none; border-radius: 14px; background: #EAF4EE; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+      <sc-if value="{{notSpeaking}}" hint-placeholder-val="{{ true }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F7A4D" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"></path><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"></path></svg></sc-if>
+      <sc-if value="{{speaking}}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="#1F7A4D" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg></sc-if>
+    </button>
+    <button onClick="{{startNav}}" style="flex: 1; height: 58px; border: none; border-radius: 14px; background: #1F7A4D; color: #FFFFFF; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M12 2l7 19-7-4-7 4z"></path></svg>안내 시작</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ═══ 07 길 안내 지도 ═══ -->
+<sc-if value="{{isNav}}" hint-placeholder-val="{{ false }}">
+<div style="position: relative; height: var(--app-h, 844px); overflow: hidden; background: #F6F6F3">
+  <div style="{{nav.mapStyle}}">
+    <img src="{{zoneMap}}" alt="{{mapAlt}}" style="position: absolute; left: 0; top: 0; width: 390px; height: 300px; display: block">
+    <svg viewBox="0 0 390 300" width="390" height="300" style="position: absolute; left: 0; top: 0; overflow: visible" aria-hidden="true">
+      <path d="{{mainD}}" fill="none" stroke="#FFFFFF" stroke-width="{{nav.sw1}}" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="{{mainD}}" fill="none" stroke="#1F7A4D" stroke-width="{{nav.sw2}}" stroke-linecap="round" stroke-linejoin="round"></path>
+    </svg>
+  </div>
+  <sc-for list="{{nav.marks}}" as="m" hint-placeholder-count="2">
+    <button onClick="{{m.go}}" aria-label="{{m.aria}}" style="{{m.style}}">
+      <sc-if value="{{m.isStairs}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h5v-5h5v-5h5V5h3"></path></svg></sc-if>
+      <sc-if value="{{m.isSlope}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19L21 7M3 19h18"></path></svg></sc-if>
+      <sc-if value="{{m.isCar}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5zM5 16v2M19 16v2"></path></svg></sc-if>
+      <sc-if value="{{m.isCross}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4v16M9.5 4v16M14.5 4v16M19 4v16"></path></svg></sc-if>
+      <sc-if value="{{m.isLight}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 21V9M12 9c0-3 2-5 6-5"></path><path d="M16 4h4v3h-4z"></path></svg></sc-if>
+      <sc-if value="{{m.isRough}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 15l3-3 3 3 3-3 3 3 3-3 3 3"></path></svg></sc-if>
+      <sc-if value="{{m.isUnk}}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 9a3 3 0 1 1 4.2 2.8c-.8.4-1.2 1-1.2 1.9M12 17.5v.5"></path></svg></sc-if>
+    </button>
+  </sc-for>
+  <span style="{{nav.startStyle}}"></span>
+  <span style="{{nav.endStyle}}"><svg width="34" height="42" viewBox="0 0 34 42" aria-hidden="true"><path d="M17 41s15-13 15-24A15 15 0 0 0 2 17c0 11 15 24 15 24z" fill="#1F7A4D" stroke="#FFFFFF" stroke-width="2.5"></path><circle cx="17" cy="16" r="5.5" fill="#FFFFFF"></circle></svg></span>
+  <span style="{{nav.ringStyle}}"></span>
+  <sc-if value="{{nav.preview}}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; left: 12px; right: 12px; top: 12px; background: #FFFFFF; border-radius: 18px; padding: 10px 14px 10px 6px; display: flex; align-items: center; gap: 6px; box-shadow: 0 6px 18px rgba(25,31,28,0.14)">
+      <button onClick="{{navBack}}" aria-label="뒤로" style="width: 40px; height: 44px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#191F1C" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+      <span style="display: flex; flex-direction: column; min-width: 0">
+        <span style="font-size: calc(17px * var(--fs, 1)); font-weight: 800; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">{{destName}}</span>
+        <span style="font-size: calc(13px * var(--fs, 1)); color: #6B756F">{{chosenName}}</span>
+      </span>
+    </div>
+  </sc-if>
+  <sc-if value="{{nav.started}}" hint-placeholder-val="{{ false }}">
+    <div role="status" aria-live="polite" style="position: absolute; left: 12px; right: 12px; top: 12px; background: #1F7A4D; color: #FFFFFF; border-radius: 20px; padding: 16px 12px 16px 16px; display: flex; align-items: center; gap: 14px; box-shadow: 0 8px 20px rgba(25,31,28,0.22)">
+      <span style="width: 56px; height: 56px; border-radius: 16px; background: rgba(255,255,255,0.16); display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+        <sc-if value="{{nav.cur.isUp}}" hint-placeholder-val="{{ false }}"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"></path></svg></sc-if>
+        <sc-if value="{{nav.cur.isLeft}}" hint-placeholder-val="{{ false }}"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20v-7a4 4 0 0 0-4-4H5M9 5L5 9l4 4"></path></svg></sc-if>
+        <sc-if value="{{nav.cur.isRight}}" hint-placeholder-val="{{ false }}"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 20v-7a4 4 0 0 1 4-4h7M15 5l4 4-4 4"></path></svg></sc-if>
+        <sc-if value="{{nav.cur.isPin}}" hint-placeholder-val="{{ false }}"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg></sc-if>
+      </span>
+      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px">
+        <span style="font-size: calc(22px * var(--fs, 1)); font-weight: 800; line-height: 1.3">{{nav.cur.title}}</span>
+        <span style="font-size: calc(15px * var(--fs, 1)); opacity: 0.9; line-height: 1.4">{{nav.cur.line}}</span>
+      </span>
+      <button onClick="{{navEnd}}" aria-label="안내 종료" style="width: 40px; height: 40px; border: none; border-radius: 20px; background: rgba(255,255,255,0.16); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; align-self: flex-start"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+  </sc-if>
+  <div style="{{nav.sheetStyle}}">
+    <button onClick="{{navToggleSheet}}" aria-expanded="{{nav.openAria}}" aria-label="경로 안내 목록 펼치기·접기" style="width: 100%; height: 28px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+      <span style="width: 40px; height: 5px; border-radius: 3px; background: #D6DCD8"></span>
+    </button>
+    <div style="padding: 0 20px 6px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0">
+      <div style="display: flex; align-items: baseline; gap: 10px">
+        <span style="font-size: calc(28px * var(--fs, 1)); font-weight: 800; font-variant-numeric: tabular-nums">{{nav.minTxt}}<span style="font-size: calc(17px * var(--fs, 1)); font-weight: 700">분</span></span>
+        <span style="font-size: calc(16px * var(--fs, 1)); color: #4A524D; font-variant-numeric: tabular-nums">{{nav.arrTxt}}</span>
+        <span style="font-size: calc(15px * var(--fs, 1)); color: #8A938D; font-variant-numeric: tabular-nums">{{nav.distTxt}}</span>
+      </div>
+      <sc-if value="{{nav.hasNext}}" hint-placeholder-val="{{ false }}"><span style="font-size: calc(15px * var(--fs, 1)); color: #4A524D">그다음 <b style="color: #191F1C">{{nav.nextTxt}}</b></span></sc-if>
+    </div>
+    <div style="{{nav.listStyle}}">
+      <sc-for list="{{nav.legs}}" as="g" hint-placeholder-count="4">
+        <div style="{{g.rowStyle}}">
+          <span style="width: 32px; flex-shrink: 0; display: flex; justify-content: center; padding-top: 1px; color: {{g.iconColor}}">
+            <sc-if value="{{g.isUp}}" hint-placeholder-val="{{ false }}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V5M6 11l6-6 6 6"></path></svg></sc-if>
+            <sc-if value="{{g.isLeft}}" hint-placeholder-val="{{ false }}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 20v-7a4 4 0 0 0-4-4H5M9 5L5 9l4 4"></path></svg></sc-if>
+            <sc-if value="{{g.isRight}}" hint-placeholder-val="{{ false }}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 20v-7a4 4 0 0 1 4-4h7M15 5l4 4-4 4"></path></svg></sc-if>
+            <sc-if value="{{g.isPin}}" hint-placeholder-val="{{ false }}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"></path><circle cx="12" cy="9.5" r="2.5"></circle></svg></sc-if>
+          </span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: calc(18px * var(--fs, 1)); font-weight: 700; color: #191F1C">{{g.title}}</span>
+            <span style="font-size: calc(15px * var(--fs, 1)); color: #6B756F">{{g.sub}}</span>
+            <sc-if value="{{g.hasTags}}" hint-placeholder-val="{{ true }}"><span style="font-size: calc(15px * var(--fs, 1)); font-weight: 600; color: #1F7A4D">{{g.tags}}</span></sc-if>
+          </span>
+          <sc-if value="{{g.hasAi}}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{g.aiGo}}" aria-label="AI 사진 판정 보기" style="align-self: center; flex-shrink: 0; height: 40px; padding: 0 10px; border: 1.5px solid #1F7A4D; border-radius: 10px; background: #FFFFFF; color: #1F7A4D; font-size: calc(14px * var(--fs, 1)); font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 5px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F7A4D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>AI</button>
+          </sc-if>
+        </div>
+      </sc-for>
+      <sc-if value="{{nav.preview}}" hint-placeholder-val="{{ true }}">
+        <div style="padding: 18px 0 6px; display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: calc(16px * var(--fs, 1)); font-weight: 700">높이 변화 <span style="font-weight: 500; color: #4A524D; font-size: calc(14px * var(--fs, 1))">{{nav.ev.sum}}</span></span>
+          <sc-if value="{{nav.ev.has}}" hint-placeholder-val="{{ true }}"><svg viewBox="0 0 300 60" width="100%" height="60" preserveAspectRatio="none" aria-hidden="true" style="display: block"><path d="{{nav.ev.areaD}}" fill="#EAF4EE"></path><path d="{{nav.ev.knownD}}" fill="none" stroke="#1F7A4D" stroke-width="2" vector-effect="non-scaling-stroke"></path></svg></sc-if>
+          <span style="font-size: calc(13px * var(--fs, 1)); color: #8A938D; line-height: 1.5">{{nav.srcTxt}}</span>
+        </div>
+      </sc-if>
+    </div>
+    <div style="padding: 10px 20px 22px; display: flex; gap: 10px; flex-shrink: 0">
+      <sc-if value="{{nav.preview}}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{speak}}" aria-label="길 요약 듣기" style="width: 56px; height: 56px; border: none; border-radius: 14px; background: #EAF4EE; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+          <sc-if value="{{notSpeaking}}" hint-placeholder-val="{{ true }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F7A4D" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"></path><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"></path></svg></sc-if>
+          <sc-if value="{{speaking}}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="#1F7A4D" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg></sc-if>
+        </button>
+        <button onClick="{{navStart}}" style="flex: 1; height: 56px; border: none; border-radius: 14px; background: #1F7A4D; color: #FFFFFF; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M12 2l7 19-7-4-7 4z"></path></svg>경로 시작</button>
+      </sc-if>
+      <sc-if value="{{nav.started}}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{navPrev}}" aria-label="이전 안내" style="width: 96px; height: 56px; border: none; border-radius: 14px; background: #F3F5F4; color: {{nav.prevColor}}; font-size: calc(17px * var(--fs, 1)); font-weight: 700; cursor: pointer">이전</button>
+        <button onClick="{{navNext}}" style="flex: 1; height: 56px; border: none; border-radius: 14px; background: #1F7A4D; color: #FFFFFF; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer">{{nav.nextLabel}}</button>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<!-- ═══ 00 시작 안내 (1~3단계) ═══ -->
+<sc-if value="{{isIntro}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; height: var(--app-h, 844px)">
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 12px 0 24px; height: 56px">
+    <span style="display: flex; gap: 6px" aria-label="{{dotsLabel}}"><sc-for list="{{dots}}" as="d" hint-placeholder-count="4"><span style="{{d.style}}"></span></sc-for></span>
+    <button onClick="{{skipIntro}}" style="height: 44px; padding: 0 12px; border: none; background: transparent; font-size: calc(16px * var(--fs, 1)); color: #6B756F; cursor: pointer">건너뛰기</button>
+  </div>
+  <div style="flex: 1; display: flex; flex-direction: column; padding: 8px 24px 0">
+    <div style="height: 360px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+      <sc-if value="{{introIs0}}" hint-placeholder-val="{{ true }}">
+        <svg width="320" height="300" viewBox="0 0 320 300" aria-hidden="true">
+          <defs><clipPath id="introClip"><circle cx="160" cy="150" r="138"></circle></clipPath></defs>
+          <circle cx="160" cy="150" r="138" fill="#EEF6F1"></circle>
+          <g clip-path="url(#introClip)">
+            <circle cx="72" cy="70" r="16" fill="#FFFFFF"></circle>
+            <path d="M0 200 Q 90 110 175 128 T 330 80 L330 300 L0 300Z" fill="#D6EBDD"></path>
+            <g transform="translate(250,104)"><rect x="0" y="0" width="28" height="22" rx="3" fill="#FFFFFF"></rect><path d="M-4 1 L14.0 -13 L32 1Z" fill="#AEBBB3"></path><rect x="10.0" y="11" width="8" height="11" rx="1.5" fill="#DCE3DF"></rect></g><g transform="translate(196,118)"><rect x="0" y="0" width="24" height="18" rx="3" fill="#FFFFFF"></rect><path d="M-4 1 L12.0 -11 L28 1Z" fill="#AEBBB3"></path><rect x="8.0" y="7" width="8" height="11" rx="1.5" fill="#DCE3DF"></rect></g><g transform="translate(290,92)"><rect x="-1.6" y="0" width="3.2" height="12" rx="1.6" fill="#8A9B90"></rect><circle cx="0" cy="-4" r="10" fill="#7DBB91"></circle></g>
+            <path d="M0 246 Q 110 170 205 186 T 330 160 L330 300 L0 300Z" fill="#C2E1CB"></path>
+            <g transform="translate(34,212)"><rect x="0" y="0" width="28" height="22" rx="3" fill="#FFFFFF"></rect><path d="M-4 1 L14.0 -13 L32 1Z" fill="#AEBBB3"></path><rect x="10.0" y="11" width="8" height="11" rx="1.5" fill="#DCE3DF"></rect></g><g transform="translate(262,170)"><rect x="0" y="0" width="30" height="24" rx="3" fill="#FFFFFF"></rect><path d="M-4 1 L15.0 -14 L34 1Z" fill="#AEBBB3"></path><rect x="11.0" y="13" width="8" height="11" rx="1.5" fill="#DCE3DF"></rect></g><g transform="translate(92,214)"><rect x="-1.6" y="0" width="3.2" height="13" rx="1.6" fill="#8A9B90"></rect><circle cx="0" cy="-4" r="11" fill="#7DBB91"></circle></g><g transform="translate(232,198)"><rect x="-1.6" y="0" width="3.2" height="11" rx="1.6" fill="#8A9B90"></rect><circle cx="0" cy="-4" r="9" fill="#7DBB91"></circle></g>
+            <path d="M84 258 L 122 204 L 160 150 L 246 96" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M84 258 L 122 204 L 160 150 L 246 96" fill="none" stroke="#B3BCB7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 6"></path>
+            <path d="M84 258 C 30 200, 60 130, 130 112 S 210 70, 246 96" fill="none" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round"></path>
+            <path d="M84 258 C 30 200, 60 130, 130 112 S 210 70, 246 96" fill="none" stroke="#B3BCB7" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 6"></path>
+            <path d="M84 258 C 140 252, 205 250, 238 222 S 168 180, 196 156 S 262 128, 246 92" fill="none" stroke="#FFFFFF" stroke-width="13" stroke-linecap="round"></path>
+            <path d="M84 258 C 140 252, 205 250, 238 222 S 168 180, 196 156 S 262 128, 246 92" fill="none" stroke="#1F7A4D" stroke-width="6" stroke-linecap="round"></path>
+            <circle cx="84" cy="258" r="7" fill="#191F1C" stroke="#FFFFFF" stroke-width="3"></circle>
+          </g>
+          <g transform="translate(232,48)"><path d="M14 40 C14 40 28 25 28 14 A14 14 0 0 0 0 14 C0 25 14 40 14 40z" fill="#1F7A4D" stroke="#FFFFFF" stroke-width="3"></path><circle cx="14" cy="14" r="5.5" fill="#FFFFFF"></circle></g>
+          <g transform="translate(141,177)"><line x1="0" y1="0" x2="0" y2="-16" stroke="#6B756F" stroke-width="1.5"></line><circle r="4" fill="#6B756F" stroke="#FFFFFF" stroke-width="2"></circle><g transform="translate(0,-31)" style="filter: drop-shadow(0 3px 5px rgba(25,31,28,0.15))"><rect x="-37.0" y="-14" width="74" height="28" rx="14" fill="#FFFFFF"></rect><path transform="translate(-26.0,-7)" d="M0 14h4.5V9.5H9V5h4.5V.5H17" fill="none" stroke="#4A524D" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path><text x="-5.0" y="5" font-size="13" font-weight="700" fill="#4A524D" style="font-family: 'Pretendard', sans-serif">계단</text></g></g>
+          <g transform="translate(165,86)"><line x1="0" y1="0" x2="0" y2="-16" stroke="#6B756F" stroke-width="1.5"></line><circle r="4" fill="#6B756F" stroke="#FFFFFF" stroke-width="2"></circle><g transform="translate(0,-31)" style="filter: drop-shadow(0 3px 5px rgba(25,31,28,0.15))"><rect x="-43.0" y="-14" width="86" height="28" rx="14" fill="#FFFFFF"></rect><path transform="translate(-32.0,-7)" d="M0 14L17 2M0 14h17" fill="none" stroke="#4A524D" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"></path><text x="-11.0" y="5" font-size="13" font-weight="700" fill="#4A524D" style="font-family: 'Pretendard', sans-serif">오르막</text></g></g>
+        </svg>
+      </sc-if>
+      <sc-if value="{{introIs1}}" hint-placeholder-val="{{ false }}">
+        <div style="position: relative; width: 342px; height: 300px; border-radius: 24px; overflow: hidden; box-shadow: 0 8px 24px rgba(25,31,28,0.10)">
+          <img src="{{introMap}}" alt="짧은 길과 덜 힘든 길 비교 지도" style="position: absolute; left: -24px; top: 0; width: 390px; height: 300px">
+          <svg viewBox="0 0 390 300" width="390" height="300" style="position: absolute; left: -24px; top: 0" aria-hidden="true">
+            <path d="{{introShortD}}" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="{{introShortD}}" fill="none" stroke="#8A938D" stroke-width="4" stroke-dasharray="2 7" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="{{introSafeD}}" fill="none" stroke="#1F7A4D" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" opacity="0.18"></path>
+            <path d="{{introSafeD}}" fill="none" stroke="#FFFFFF" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="{{introSafeD}}" fill="none" stroke="#1F7A4D" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"></path>
+            <g transform="{{introAvoidT}}">
+              <line x1="0" y1="0" x2="0" y2="-14" stroke="#4A524D" stroke-width="1.5"></line>
+              <rect x="-46" y="-38" width="92" height="24" rx="12" fill="#FFFFFF" stroke="#C9CFCB" stroke-width="1"></rect>
+              <path transform="translate(-35,-32)" d="M0 12h4V8h4V4h4V0h3" fill="none" stroke="#4A524D" stroke-width="1.8" stroke-linejoin="round"></path>
+              <text x="-15" y="-21.5" font-size="12" font-weight="700" fill="#4A524D" style="font-family: 'Pretendard', sans-serif">{{introAvoidLabel}}</text>
+              <circle r="4" fill="#4A524D" stroke="#FFFFFF" stroke-width="2"></circle>
+            </g>
+            <g transform="{{introSafeT}}">
+              <rect x="-46" y="-13" width="92" height="26" rx="13" fill="#1F7A4D"></rect>
+              <path d="M-34 -1l4 4 7-8" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
+              <text x="-18" y="4.5" font-size="12.5" font-weight="800" fill="#FFFFFF" style="font-family: 'Pretendard', sans-serif">덜 힘든 길</text>
+            </g>
+          </svg>
+        </div>
+      </sc-if>
+      <sc-if value="{{introIs2}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 12px; width: 100%">
+          <div style="display: flex; align-items: center; gap: 16px; background: #F3F5F4; border-radius: 20px; padding: 20px">
+            <span style="width: 56px; height: 56px; border-radius: 16px; background: #1F7A4D; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><ellipse cx="8" cy="7" rx="3" ry="4.2"></ellipse><ellipse cx="16" cy="13" rx="3" ry="4.2"></ellipse><rect x="6.2" y="12" width="3.6" height="2.4" rx="1.2"></rect><rect x="14.2" y="18" width="3.6" height="2.4" rx="1.2"></rect></svg></span>
+            <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: calc(15px * var(--fs, 1)); color: #6B756F">직접 걸어서 조사한 길</span><span style="font-size: calc(26px * var(--fs, 1)); font-weight: 800; font-variant-numeric: tabular-nums">{{surveyKm}}<span style="font-size: calc(17px * var(--fs, 1)); font-weight: 700; color: #6B756F"> · {{surveySegs}}개 구간</span></span></span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 16px; background: #F3F5F4; border-radius: 20px; padding: 20px">
+            <span style="width: 56px; height: 56px; border-radius: 16px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1F7A4D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg></span>
+            <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: calc(15px * var(--fs, 1)); color: #6B756F">AI가 학습한 길 사진</span><span style="font-size: calc(26px * var(--fs, 1)); font-weight: 800; font-variant-numeric: tabular-nums">388장<span style="font-size: calc(17px * var(--fs, 1)); font-weight: 700; color: #6B756F"> · 계단 194장</span></span></span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 4px 6px; font-size: calc(15px * var(--fs, 1)); color: #6B756F; line-height: 1.5">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B756F" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="flex-shrink: 0"><circle cx="12" cy="12" r="9"></circle><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17v.5"></path></svg>
+            확인하지 못한 길은 "정보 없음"으로 솔직하게 알려드려요
+          </div>
+        </div>
+      </sc-if>
+    </div>
+    <sc-if value="{{introIs0}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; align-items: center; gap: 10px; margin-top: 20px"><img src="assets/logo.png" alt="" width="36" height="36" style="display: block; width: 36px; height: 36px"><span style="font-size: calc(22px * var(--fs, 1)); font-weight: 800; color: #1F7A4D">안심길</span></div>
+    </sc-if>
+    <h1 style="margin: 14px 0 0; font-size: calc(28px * var(--fs, 1)); font-weight: 800; line-height: 1.38; white-space: pre-line; letter-spacing: -0.02em">{{intro.title}}</h1>
+    <p style="margin: 12px 0 0; font-size: calc(18px * var(--fs, 1)); color: #6B756F; line-height: 1.55; white-space: pre-line">{{intro.body}}</p>
+    <sc-if value="{{introIs1}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; gap: 8px; margin-top: 16px">
+        <span style="display: flex; align-items: center; gap: 6px; font-size: calc(15px * var(--fs, 1)); font-weight: 600; color: #4A524D; background: #F3F5F4; padding: 8px 12px; border-radius: 10px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h5v-5h5v-5h5V5h3"></path></svg>계단</span>
+        <span style="display: flex; align-items: center; gap: 6px; font-size: calc(15px * var(--fs, 1)); font-weight: 600; color: #4A524D; background: #F3F5F4; padding: 8px 12px; border-radius: 10px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 19L21 7M3 19h18"></path></svg>가파른 길</span>
+        <span style="display: flex; align-items: center; gap: 6px; font-size: calc(15px * var(--fs, 1)); font-weight: 600; color: #4A524D; background: #F3F5F4; padding: 8px 12px; border-radius: 10px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5zM5 16v2M19 16v2"></path></svg>인도 없음</span>
+      </div>
+    </sc-if>
+  </div>
+  <div style="padding: 10px 20px 24px; display: flex; gap: 10px">
+    <button onClick="{{speakIntro}}" aria-label="이 화면 읽어 주기" style="width: 58px; height: 58px; border: none; border-radius: 14px; background: #EAF4EE; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
+      <sc-if value="{{notSpeaking}}" hint-placeholder-val="{{ true }}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F7A4D" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"></path><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"></path></svg></sc-if>
+      <sc-if value="{{speaking}}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="#1F7A4D" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg></sc-if>
+    </button>
+    <sc-if value="{{introHasPrev}}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{introPrev}}" style="width: 96px; height: 58px; border: none; border-radius: 14px; background: #F3F5F4; color: #191F1C; font-size: calc(17px * var(--fs, 1)); font-weight: 600; cursor: pointer">이전</button>
+    </sc-if>
+    <button onClick="{{introNext}}" style="flex: 1; height: 58px; border: none; border-radius: 14px; background: #1F7A4D; color: #FFFFFF; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer">다음</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ═══ 00 첫 설정 / 걷기 설정 ═══ -->
+<sc-if value="{{isSettings}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; height: var(--app-h, 844px)">
+  <sc-if value="{{onboard}}" hint-placeholder-val="{{ true }}">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 12px 0 24px; height: 56px">
+      <span style="display: flex; gap: 6px" aria-label="{{dotsLabel}}"><sc-for list="{{dots}}" as="d" hint-placeholder-count="4"><span style="{{d.style}}"></span></sc-for></span>
+      <button onClick="{{introPrev}}" style="height: 44px; padding: 0 12px; border: none; background: transparent; font-size: calc(16px * var(--fs, 1)); color: #6B756F; cursor: pointer">이전</button>
+    </div>
+    <div style="padding: 20px 24px 8px; display: flex; flex-direction: column; gap: 10px">
+      <h1 style="margin: 0; font-size: calc(27px * var(--fs, 1)); font-weight: 800; line-height: 1.35">계단은 어떠세요?</h1>
+      <p style="margin: 0; font-size: calc(17px * var(--fs, 1)); color: #6B756F; line-height: 1.5">골라 주시면 덜 힘든 길을 찾아드려요.<br>나중에 언제든 바꿀 수 있어요.</p>
+    </div>
+  </sc-if>
+  <sc-if value="{{notOnboard}}" hint-placeholder-val="{{ false }}">
+    <div style="display: flex; align-items: center; gap: 4px; padding: 12px 12px 8px">
+      <button onClick="{{goHome}}" aria-label="뒤로" style="width: 48px; height: 48px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#191F1C" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+      <h1 style="margin: 0; font-size: calc(21px * var(--fs, 1)); font-weight: 800">설정</h1>
+    </div>
+  </sc-if>
+  <div style="flex: 1; overflow-y: auto; padding: 20px 20px 12px; display: flex; flex-direction: column; gap: 10px">
+    <sc-if value="{{notOnboard}}" hint-placeholder-val="{{ false }}"><h2 style="margin: 0 0 2px; font-size: calc(17px * var(--fs, 1)); font-weight: 700; color: #6B756F">계단은 어떠세요?</h2></sc-if>
+    <sc-for list="{{profs}}" as="p" hint-placeholder-count="3">
+      <button onClick="{{p.pick}}" role="radio" aria-checked="{{p.checked}}" style="{{p.style}}">
+        <span style="{{p.iconBox}}">
+          <sc-if value="{{p.isOk}}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h5v-5h5v-5h5V5h3"></path></svg></sc-if>
+          <sc-if value="{{p.isRail}}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21h5v-5h5v-5h5V6h3"></path><path d="M4 13L19 2M6 11.5v3M12 7v3M18 2.5v3"></path></svg></sc-if>
+          <sc-if value="{{p.isNo}}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 20h5v-5h5v-5h5V5h3"></path><path d="M4 4l16 16"></path></svg></sc-if>
+        </span>
+        <span style="display: flex; flex-direction: column; gap: 2px; flex: 1; text-align: left">
+          <span style="font-size: calc(19px * var(--fs, 1)); font-weight: 700">{{p.t}}</span>
+          <span style="font-size: calc(14px * var(--fs, 1)); color: #6B756F">{{p.sub}}</span>
+        </span>
+        <span style="{{p.radio}}"></span>
+      </button>
+    </sc-for>
+    <button onClick="{{toggleBig}}" role="switch" aria-checked="{{bigAria}}" style="margin-top: 10px; min-height: 72px; border-radius: 18px; display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; background: #F3F5F4; border: none; text-align: left">
+      <span style="width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #191F1C">가<span style="font-size: 15px">가</span></span>
+      <span style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+        <span style="font-size: calc(19px * var(--fs, 1)); font-weight: 700">글자 크게 보기</span>
+        <span style="font-size: calc(14px * var(--fs, 1)); color: #6B756F">모든 글자를 더 크게 보여드려요</span>
+      </span>
+      <span style="{{bigTrack}}"><span style="{{bigKnob}}"></span></span>
+    </button>
+    <sc-if value="{{canInstall}}" hint-placeholder-val="{{ false }}">
+      <button onClick="{{installApp}}" style="margin-top: 10px; min-height: 64px; border-radius: 18px; display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; background: #EAF4EE; border: none; text-align: left; font-size: calc(18px * var(--fs, 1)); font-weight: 700; color: #1F7A4D">
+        <img src="assets/logo.png" alt="" width="36" height="36" style="width: 36px; height: 36px">홈 화면에 앱 추가하기
+      </button>
+    </sc-if>
+    <sc-if value="{{showIosHint}}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top: 10px; border-radius: 18px; padding: 14px 16px; background: #F3F5F4; font-size: calc(15px * var(--fs, 1)); color: #4A524D; line-height: 1.6">
+        <b style="color: #191F1C">아이폰에서 앱처럼 쓰기</b><br>사파리 아래쪽 공유 버튼(□↑) → <b>홈 화면에 추가</b>를 누르세요.
+      </div>
+    </sc-if>
+    <sc-if value="{{notOnboard}}" hint-placeholder-val="{{ false }}">
+      <h2 style="margin: 28px 0 4px; font-size: calc(14px * var(--fs, 1)); font-weight: 700; color: #6B756F">시연용 · 예외 화면</h2>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <button onClick="{{showE1}}" style="height: 48px; border: none; border-radius: 12px; background: #F3F5F4; font-size: calc(15px * var(--fs, 1)); cursor: pointer">같은 장소</button>
+        <button onClick="{{showE2}}" style="height: 48px; border: none; border-radius: 12px; background: #F3F5F4; font-size: calc(15px * var(--fs, 1)); cursor: pointer">위치 사용 불가</button>
+        <button onClick="{{showE3}}" style="height: 48px; border: none; border-radius: 12px; background: #F3F5F4; font-size: calc(15px * var(--fs, 1)); cursor: pointer">길 없음</button>
+        <button onClick="{{showE4}}" style="height: 48px; border: none; border-radius: 12px; background: #F3F5F4; font-size: calc(15px * var(--fs, 1)); cursor: pointer">연결 오류</button>
+      </div>
+      <button onClick="{{replayOnboard}}" style="margin-top: 8px; height: 48px; border: none; border-radius: 12px; background: #F3F5F4; font-size: calc(15px * var(--fs, 1)); cursor: pointer">첫 화면부터 다시 보기</button>
+    </sc-if>
+  </div>
+  <div style="padding: 10px 20px 24px">
+    <button onClick="{{finishSettings}}" style="width: 100%; height: 58px; border: none; border-radius: 14px; background: #1F7A4D; color: #FFFFFF; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer">{{settingsCta}}</button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ═══ 예외 E1~E4 ═══ -->
+<sc-if value="{{isError}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; height: var(--app-h, 844px)">
+  <div style="display: flex; align-items: center; gap: 4px; padding: 12px 12px 8px">
+    <button onClick="{{goHome}}" aria-label="뒤로" style="width: 48px; height: 48px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#191F1C" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+  </div>
+  <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 0 32px 80px; text-align: center">
+    <span style="width: 64px; height: 64px; border-radius: 32px; background: #F3F5F4; color: #191F1C; font-size: calc(30px * var(--fs, 1)); font-weight: 800; display: flex; align-items: center; justify-content: center">{{err.icon}}</span>
+    <span style="font-size: calc(22px * var(--fs, 1)); font-weight: 800">{{err.title}}</span>
+    <span style="font-size: calc(17px * var(--fs, 1)); color: #6B756F; line-height: 1.6; white-space: pre-line">{{err.body}}</span>
+  </div>
+  <div style="padding: 10px 20px 24px; display: flex; flex-direction: column; gap: 8px">
+    <button onClick="{{err.primary}}" style="width: 100%; height: 58px; border: none; border-radius: 14px; background: #1F7A4D; color: #FFFFFF; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer">{{err.primaryLabel}}</button>
+    <sc-if value="{{err.hasSecondary}}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{err.secondary}}" style="width: 100%; height: 54px; border: none; border-radius: 14px; background: #F3F5F4; color: #191F1C; font-size: calc(17px * var(--fs, 1)); font-weight: 600; cursor: pointer">{{err.secondaryLabel}}</button>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<!-- ═══ AI 사진 판정 시트 ═══ -->
+<sc-if value="{{aiOpen}}" hint-placeholder-val="{{ false }}">
+  <div style="position: absolute; inset: 0; background: rgba(25,31,28,0.45); display: flex; align-items: flex-end; z-index: 50">
+    <div role="dialog" aria-label="AI 사진 판정" style="width: 100%; background: #FFFFFF; border-radius: 22px 22px 0 0; padding: 18px 20px 24px; display: flex; flex-direction: column; gap: 12px; max-height: 800px; overflow-y: auto; box-sizing: border-box">
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span style="font-size: calc(12px * var(--fs, 1)); font-weight: 900; background: #1F7A4D; color: #FFFFFF; border-radius: 6px; padding: 3px 7px">AI</span>
+        <span style="font-size: calc(19px * var(--fs, 1)); font-weight: 800; flex: 1">사진 판정 · 구간 {{ai.seg}}</span>
+        <button onClick="{{aiClose}}" aria-label="닫기" style="width: 40px; height: 40px; border: none; border-radius: 20px; background: #F3F5F4; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#191F1C" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+      </div>
+      <img src="{{ai.img}}" alt="구간 {{ai.seg}} 현장사진에 AI가 계단과 보행면을 색칠한 결과" style="{{ai.imgStyle}}">
+      <div style="display: flex; gap: 14px; font-size: calc(14px * var(--fs, 1)); color: #4A524D">
+        <span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 3px; background: rgb(255,120,0)"></span>계단</span>
+        <span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 14px; border-radius: 3px; background: rgb(0,170,90)"></span>걷는 길(보행면)</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <div style="background: #F3F5F4; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: calc(13px * var(--fs, 1)); color: #6B756F">계단으로 보인 면적</span><span style="font-size: calc(22px * var(--fs, 1)); font-weight: 800; font-variant-numeric: tabular-nums">{{ai.pct}}</span></div>
+        <div style="background: #F3F5F4; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px"><span style="font-size: calc(13px * var(--fs, 1)); color: #6B756F">분석한 현장사진</span><span style="font-size: calc(22px * var(--fs, 1)); font-weight: 800; font-variant-numeric: tabular-nums">{{ai.n}}장</span></div>
+      </div>
+      <div style="{{aiAgreeStyle}}">
+        <span style="font-size: calc(17px * var(--fs, 1)); font-weight: 800; color: #191F1C">{{ai.verdict}}</span>
+        <span style="font-size: calc(14px * var(--fs, 1)); color: #4A524D">{{ai.field}}</span>
+      </div>
+      <span style="font-size: calc(12px * var(--fs, 1)); color: #6B756F; line-height: 1.5">DeepLabV3+ 모델 · AI Hub 인도보행 영상 388장 학습 · 계단 인식 IoU 0.53. 계단 면적 10% 이상이면 '계단'으로 판정해요. AI 판정은 참고용이고, 경로 계산은 현장조사 기록을 우선해요.</span>
+    </div>
+  </div>
+</sc-if>
+</div>
+</template>
+<noscript>안심길은 자바스크립트를 켜야 쓸 수 있어요.</noscript>
+<script src="runtime.js"></script>
+<script src="app.js"></script>
+<script>
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js");
+</script>
+</body>
+</html>
