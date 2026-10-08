@@ -18,6 +18,7 @@
     app.style.left = left + "px";
     app.style.top = (w <= 520 ? 0 : 16) + "px";
     app.style.setProperty("--app-h", appH + "px");
+    window.__appScale = s; window.__appH = appH;
     app.style.height = appH + "px";
     document.body.classList.toggle("desktop", w > 520);
   }
@@ -117,12 +118,12 @@
   };
 
   // ── 이벤트 연결 (클릭·입력) ──
-  function delegate(type) {
+  function delegate(type, opts) {
     document.addEventListener(type, function (ev) {
       for (var n = ev.target; n && n !== document; n = n.parentNode) {
-        if (n.__h && n.__h[type]) { n.__h[type](ev); return; }
+        if (n.__h && n.__h[type]) { n.__h[type](ev, n); return; }
       }
-    });
+    }, opts || false);
   }
 
   // ── 앱 설치(PWA) 버튼용 ──
@@ -133,8 +134,11 @@
   window.startApp = function (ComponentClass) {
     tpl = document.getElementById("app-template");
     root = document.getElementById("app");
-    fit();
+    fit(); window.addEventListener("resize", schedule);
     delegate("click"); delegate("input");
+    // 지도 확대·이동 (손가락 두 개로 벌리기, 끌기, 마우스 휠)
+    ["pointerdown", "pointermove", "pointerup", "pointercancel"].forEach(function (t) { delegate(t); });
+    delegate("wheel", {passive: false});
     comp = new ComponentClass({});
     render();
   };
