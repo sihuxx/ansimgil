@@ -16,6 +16,7 @@
 body{margin:0;background:#ECEFF4}
 a{color:#2C5AA0}a:hover{color:#1F467F}
 button,input{font-family:inherit}
+button{flex-shrink:0}
 button:focus-visible,input:focus-visible{outline:3px solid #2C5AA0;outline-offset:2px}
 input::placeholder{color:#8A93A3}
 html,body{height:100%;overflow:hidden}
@@ -47,35 +48,16 @@ body.desktop #app{border-radius:28px;box-shadow:0 10px 40px rgba(27,36,51,.18)}
   <div style="margin: 0 20px; border-radius: 18px; background: #F3F5F8; padding: 6px">
     <button onClick="{{pickStart}}" style="width: 100%; height: 56px; border: none; background: transparent; display: flex; align-items: center; gap: 12px; padding: 0 12px; cursor: pointer; text-align: left">
       <span style="width: 10px; height: 10px; border-radius: 5px; background: #1B2433; flex-shrink: 0"></span>
-      <span style="font-size: calc(15px * var(--fs, 1)); color: #667085; width: 32px">출발</span>
+      <span style="font-size: calc(15px * var(--fs, 1)); color: #667085; min-width: 32px; white-space: nowrap; flex-shrink: 0">출발</span>
       <span style="font-size: calc(18px * var(--fs, 1)); font-weight: 600; flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">{{startName}}</span>
     </button>
     <div style="height: 1px; background: #E2E7EF; margin: 0 12px"></div>
     <button onClick="{{pickDest}}" style="width: 100%; height: 56px; border: none; background: transparent; display: flex; align-items: center; gap: 12px; padding: 0 12px; cursor: pointer; text-align: left">
       <span style="width: 10px; height: 10px; border-radius: 5px; background: #2C5AA0; flex-shrink: 0"></span>
-      <span style="font-size: calc(15px * var(--fs, 1)); color: #667085; width: 32px">도착</span>
+      <span style="font-size: calc(15px * var(--fs, 1)); color: #667085; min-width: 32px; white-space: nowrap; flex-shrink: 0">도착</span>
       <span style="font-size: calc(18px * var(--fs, 1)); font-weight: 600; color: #8A93A3; flex: 1">어디로 가세요?</span>
     </button>
   </div>
-  <sc-if value="{{hasHomeGo}}" hint-placeholder-val="{{ true }}">
-    <button onClick="{{goHomeRoute}}" aria-label="{{homeGoAria}}" style="margin: 10px 20px 0; min-height: 60px; border: none; border-radius: 16px; background: #2C5AA0; color: #FFFFFF; display: flex; align-items: center; gap: 12px; padding: 10px 16px; cursor: pointer; text-align: left">
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg>
-      <span style="display: flex; flex-direction: column; flex: 1; min-width: 0">
-        <span style="font-size: calc(19px * var(--fs, 1)); font-weight: 800">우리 집으로</span>
-        <span style="font-size: calc(14px * var(--fs, 1)); opacity: 0.85; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">{{homeName}}</span>
-      </span>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg>
-    </button>
-  </sc-if>
-  <sc-if value="{{needHome}}" hint-placeholder-val="{{ false }}">
-    <button onClick="{{pickHomeFromHome}}" style="margin: 10px 20px 0; min-height: 60px; border: 1.5px dashed #B7BFCC; border-radius: 16px; background: #FFFFFF; display: flex; align-items: center; gap: 12px; padding: 10px 16px; cursor: pointer; text-align: left">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2C5AA0" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg>
-      <span style="display: flex; flex-direction: column">
-        <span style="font-size: calc(17px * var(--fs, 1)); font-weight: 700; color: #2C5AA0">우리 집 등록하기</span>
-        <span style="font-size: calc(14px * var(--fs, 1)); color: #667085">한 번 등록하면 버튼 하나로 집까지 안내해요</span>
-      </span>
-    </button>
-  </sc-if>
   <div onPointerDown="{{mapH.down}}" onPointerMove="{{mapH.move}}" onPointerUp="{{mapH.up}}" onPointerCancel="{{mapH.up}}" onWheel="{{mapH.wheel}}" style="position: relative; width: 390px; height: 220px; overflow: hidden; margin-top: 14px; flex-shrink: 0; touch-action: none; cursor: grab">
     <div style="{{mapH.layer}}">
       <img src="{{zoneMap}}" alt="{{zoneName}} 지도" draggable="false" style="{{zoneImg}}">
@@ -173,12 +155,12 @@ body.desktop #app{border-radius:28px;box-shadow:0 10px 40px rgba(27,36,51,.18)}
       <span style="position: absolute; left: 19px; top: 27px; height: 26px; border-left: 2px dotted #B7BFCC"></span>
       <span style="display: flex; align-items: center; gap: 10px; min-height: 38px; min-width: 0; border-bottom: 1px solid #ECEFF4">
         <span style="width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box; border: 3px solid #1B2433; background: #FFFFFF; flex-shrink: 0"></span>
-        <span style="font-size: calc(13px * var(--fs, 1)); font-weight: 700; color: #667085; width: 28px; flex-shrink: 0">출발</span>
+        <span style="font-size: calc(13px * var(--fs, 1)); font-weight: 700; color: #667085; min-width: 28px; white-space: nowrap; flex-shrink: 0">출발</span>
         <span style="font-size: calc(16px * var(--fs, 1)); font-weight: 600; color: #1B2433; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">{{startName}}</span>
       </span>
       <span style="display: flex; align-items: center; gap: 10px; min-height: 40px; min-width: 0">
         <span style="width: 12px; height: 12px; border-radius: 50%; background: #2C5AA0; box-shadow: 0 0 0 3px #EAF0F8; flex-shrink: 0"></span>
-        <span style="font-size: calc(13px * var(--fs, 1)); font-weight: 700; color: #2C5AA0; width: 28px; flex-shrink: 0">도착</span>
+        <span style="font-size: calc(13px * var(--fs, 1)); font-weight: 700; color: #2C5AA0; min-width: 28px; white-space: nowrap; flex-shrink: 0">도착</span>
         <span style="font-size: calc(17px * var(--fs, 1)); font-weight: 800; color: #1B2433; overflow: hidden; white-space: nowrap; text-overflow: ellipsis">{{destName}}</span>
       </span>
     </div>
@@ -484,7 +466,7 @@ body.desktop #app{border-radius:28px;box-shadow:0 10px 40px rgba(27,36,51,.18)}
     <span style="display: flex; gap: 6px" aria-label="{{dotsLabel}}"><sc-for list="{{dots}}" as="d" hint-placeholder-count="4"><span style="{{d.style}}"></span></sc-for></span>
     <button onClick="{{skipIntro}}" style="height: 44px; padding: 0 12px; border: none; background: transparent; font-size: calc(16px * var(--fs, 1)); color: #667085; cursor: pointer">건너뛰기</button>
   </div>
-  <div style="flex: 1; display: flex; flex-direction: column; padding: 8px 24px 0">
+  <div onPointerDown="{{introSwipe.down}}" onPointerUp="{{introSwipe.up}}" onPointerCancel="{{introSwipe.cancel}}" onWheel="{{introSwipe.wheel}}" style="flex: 1; display: flex; flex-direction: column; padding: 8px 24px 0; touch-action: none; user-select: none">
     <div style="height: 360px; display: flex; align-items: center; justify-content: center; flex-shrink: 0">
       <sc-if value="{{introIs0}}" hint-placeholder-val="{{ true }}">
         <svg width="320" height="300" viewBox="0 0 320 300" aria-hidden="true">
@@ -621,22 +603,22 @@ body.desktop #app{border-radius:28px;box-shadow:0 10px 40px rgba(27,36,51,.18)}
         <span style="{{p.radio}}"></span>
       </button>
     </sc-for>
-    <sc-if value="{{notOnboard}}" hint-placeholder-val="{{ false }}">
-      <h2 style="margin: 18px 0 2px; font-size: calc(17px * var(--fs, 1)); font-weight: 700; color: #667085">우리 집</h2>
-      <button onClick="{{pickHomeFromSettings}}" style="min-height: 64px; border-radius: 18px; display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; background: #F3F5F8; border: none; text-align: left">
-        <span style="width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0; background: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2C5AA0" stroke-width="2.2" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"></path></svg></span>
-        <span style="flex: 1; font-size: calc(18px * var(--fs, 1)); font-weight: 700">{{homeLabel}}</span>
-        <span style="font-size: calc(15px * var(--fs, 1)); font-weight: 700; color: #2C5AA0">{{homeAction}}</span>
-      </button>
-    </sc-if>
-    <button onClick="{{toggleBig}}" role="switch" aria-checked="{{bigAria}}" style="margin-top: 10px; min-height: 72px; border-radius: 18px; display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; background: #F3F5F8; border: none; text-align: left">
-      <span style="width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: #1B2433">가<span style="font-size: 15px">가</span></span>
-      <span style="display: flex; flex-direction: column; gap: 2px; flex: 1">
-        <span style="font-size: calc(19px * var(--fs, 1)); font-weight: 700">글자 크게 보기</span>
-        <span style="font-size: calc(14px * var(--fs, 1)); color: #667085">모든 글자를 더 크게 보여드려요</span>
-      </span>
-      <span style="{{bigTrack}}"><span style="{{bigKnob}}"></span></span>
-    </button>
+    <h2 style="margin: 18px 0 2px; font-size: calc(17px * var(--fs, 1)); font-weight: 700; color: #667085">글자 크기</h2>
+    <div style="border-radius: 18px; background: #F3F5F8; padding: 14px; display: flex; flex-direction: column; gap: 12px; flex-shrink: 0">
+      <div role="radiogroup" aria-label="글자 크기" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px">
+        <sc-for list="{{fsOpts}}" as="o" hint-placeholder-count="5">
+          <button onClick="{{o.pick}}" role="radio" aria-checked="{{o.checked}}" aria-label="{{o.label}}" style="{{o.style}}">
+            <span style="{{o.glyph}}">가</span>
+            <span style="font-size: 12px; font-weight: 600; white-space: nowrap">{{o.label}}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="background: #FFFFFF; border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: calc(13px * var(--fs, 1)); color: #667085">미리보기</span>
+        <span style="font-size: calc(19px * var(--fs, 1)); font-weight: 700">은행오거리 쉼터 앞에서 왼쪽으로 도세요</span>
+        <span style="font-size: calc(15px * var(--fs, 1)); color: #475066">37m 이동 · 신호 고장 횡단보도</span>
+      </div>
+    </div>
     <sc-if value="{{canInstall}}" hint-placeholder-val="{{ false }}">
       <button onClick="{{installApp}}" style="margin-top: 10px; min-height: 64px; border-radius: 18px; display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; background: #EAF0F8; border: none; text-align: left; font-size: calc(18px * var(--fs, 1)); font-weight: 700; color: #2C5AA0">
         <img src="assets/logo.png" alt="" width="36" height="36" style="width: 36px; height: 36px">홈 화면에 앱 추가하기
@@ -648,6 +630,15 @@ body.desktop #app{border-radius:28px;box-shadow:0 10px 40px rgba(27,36,51,.18)}
       </div>
     </sc-if>
     <sc-if value="{{notOnboard}}" hint-placeholder-val="{{ false }}">
+      <h2 style="margin: 18px 0 2px; font-size: calc(17px * var(--fs, 1)); font-weight: 700; color: #667085">도움말</h2>
+      <button onClick="{{replayOnboard}}" style="min-height: 72px; border-radius: 18px; display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; background: #F3F5F8; border: none; text-align: left; color: #1B2433">
+        <span style="width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; background: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2C5AA0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"></path><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"></path></svg></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+          <span style="font-size: calc(18px * var(--fs, 1)); font-weight: 700">앱 소개 다시 보기</span>
+          <span style="font-size: calc(14px * var(--fs, 1)); color: #667085">처음에 본 안내 4단계를 다시 보여드려요</span>
+        </span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A93A3" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" style="flex-shrink: 0"><path d="M9 5l7 7-7 7"></path></svg>
+      </button>
       <h2 style="margin: 28px 0 4px; font-size: calc(14px * var(--fs, 1)); font-weight: 700; color: #667085">시연용 · 예외 화면</h2>
       <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
         <button onClick="{{showE1}}" style="height: 48px; border: none; border-radius: 12px; background: #F3F5F8; font-size: calc(15px * var(--fs, 1)); cursor: pointer">같은 장소</button>
@@ -655,7 +646,6 @@ body.desktop #app{border-radius:28px;box-shadow:0 10px 40px rgba(27,36,51,.18)}
         <button onClick="{{showE3}}" style="height: 48px; border: none; border-radius: 12px; background: #F3F5F8; font-size: calc(15px * var(--fs, 1)); cursor: pointer">길 없음</button>
         <button onClick="{{showE4}}" style="height: 48px; border: none; border-radius: 12px; background: #F3F5F8; font-size: calc(15px * var(--fs, 1)); cursor: pointer">연결 오류</button>
       </div>
-      <button onClick="{{replayOnboard}}" style="margin-top: 8px; height: 48px; border: none; border-radius: 12px; background: #F3F5F8; font-size: calc(15px * var(--fs, 1)); cursor: pointer">첫 화면부터 다시 보기</button>
     </sc-if>
   </div>
   <div style="padding: 10px 20px 24px">

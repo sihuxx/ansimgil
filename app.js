@@ -5,6 +5,7 @@ var MAPS = {A: "assets/map_A.svg", B: "assets/map_B.svg", C: "assets/map_C.svg"}
 var ZONENAME = {A: "은행근린공원 일대", B: "남한산성시장 일대", C: "은행1동 언덕 골목"};
 var FAVS = {A: ["은행동오거리 정류장", "구현진약국 앞 정류장", "어린이공원 정류장"], B: ["은행2동행정복지센터", "남한산성시장", "새코끼리약국"], C: ["그린빌리지 정류장", "태영빌라 정류장", "은행1동 행정복지센터"]};
 var PROFS = [{k: "ok", t: "계단도 괜찮아요", sub: "가장 가까운 길 위주로 찾아요", short: "계단 괜찮음"}, {k: "rail", t: "손잡이 있으면 괜찮아요", sub: "손잡이 없는 계단은 피해요", short: "손잡이 필요"}, {k: "no", t: "계단은 어려워요", sub: "조금 돌아가도 계단을 피해요", short: "계단 어려움"}];
+var FS_LEVELS = [{v: 0.9, t: "작게"}, {v: 1, t: "보통"}, {v: 1.15, t: "크게"}, {v: 1.3, t: "더 크게"}, {v: 1.45, t: "아주 크게"}];
 var RECENT_SEED = ["은행오거리 쉼터", "한국유통 정류장", "남한산성시장", "은행2동 제2복지회관", "자혜공원", "노루목공원"];
 var MULT = {ok: {"있음": 0.5, "부분": 0.5, "없음": 0.5, "미확인": 0.5}, rail: {"있음": 1, "부분": 4, "없음": 8, "미확인": 4}, no: {"있음": 30, "부분": 30, "없음": 30, "미확인": 30}};
 var SWC = {"있음": 0, "부분": 0.35, "없음": 0.8}, SFC = {"양호": 0, "불량": 0.3}, LTC = {"양호": 0, "어두움": 0.15};
@@ -303,10 +304,10 @@ class Component extends DCLogic {
   constructor(props) {
     super(props);
     var rec = null; try { rec = JSON.parse(window.localStorage.getItem("ansim.recent") || "null"); } catch (e) {}
-    var big = false; try { big = window.localStorage.getItem("ansim.big") === "1"; } catch (e) {}
+    var big = false, fsz = 1; try { var fv = parseFloat(window.localStorage.getItem("ansim.fs")); fsz = FS_LEVELS.some(function (l) { return l.v === fv; }) ? fv : (window.localStorage.getItem("ansim.big") === "1" ? 1.15 : 1); } catch (e) {}
     var home = null, detour = "near", freq = {};
-    try { home = window.localStorage.getItem("ansim.home") || null; detour = window.localStorage.getItem("ansim.detour") || "near"; freq = JSON.parse(window.localStorage.getItem("ansim.freq") || "{}") || {}; } catch (e) {}
-    this.state = {big: big, home: home, detour: detour, freq: freq, onboard: true, recent: Array.isArray(rec) ? rec : RECENT_SEED, screen: "intro", step: 0, start: "은행근린공원 서쪽입구", dest: "은행동오거리 정류장", prof: "rail", sel: "safe", pickReturn: "home", startGps: false, gpsBusy: false, confirmErr: "", navVoice: true, navPos: 0, navPlay: false, pickFor: "dest", q: "", err: "e3", speaking: false, toast: false};
+    try { detour = window.localStorage.getItem("ansim.detour") || "near"; freq = JSON.parse(window.localStorage.getItem("ansim.freq") || "{}") || {}; } catch (e) {}
+    this.state = {big: big, fsz: fsz, home: home, detour: detour, freq: freq, onboard: true, recent: Array.isArray(rec) ? rec : RECENT_SEED, screen: "intro", step: 0, start: "은행근린공원 서쪽입구", dest: "은행동오거리 정류장", prof: "rail", sel: "safe", pickReturn: "home", startGps: false, gpsBusy: false, confirmErr: "", navVoice: true, navPos: 0, navPlay: false, pickFor: "dest", q: "", err: "e3", speaking: false, toast: false};
     this.timer = null;
   }
   componentWillUnmount() { if (this.timer) clearTimeout(this.timer); this.stopTimer(); try { window.speechSynthesis.cancel(); } catch (e) {} }
@@ -368,6 +369,11 @@ class Component extends DCLogic {
     }
   }
   mapUp(key, ev) { var g = this._g; if (!g || g.key !== key) return; delete g.ptr[ev.pointerId]; if (Object.keys(g.ptr).length) this.mapBase(); else this._g = null; }
+  introStep(dir) {
+    var st = this.state;
+    if (dir > 0) { if (st.step >= 2) this.go("settings", {onboard: true}); else this.go("intro", {step: st.step + 1}); }
+    else if (st.step > 0) this.go("intro", {step: st.step - 1});
+  }
   place(n) { return G.places.filter(function (p) { return p[0] === n; })[0]; }
   go(screen, extra) { if (screen !== "nav") this.stopTimer(); try { window.speechSynthesis.cancel(); } catch (e) {} this.setState(Object.assign({screen: screen, speaking: false, toast: false, mv: {}}, extra || {})); }
   find(dest) {
@@ -623,11 +629,11 @@ class Component extends DCLogic {
     var q = (st.q || "").trim();
     var pool = G.places.filter(function (p) { return (!q || p[0].indexOf(q) >= 0) && !(st.pickFor === "dest" && p[0] === st.start); });
     var groups;
-    if (st.pickFor === "start" || st.pickFor === "home") groups = ["A", "B", "C"].map(function (z) { return {z: z, title: z + "구역 · " + ZONENAME[z]}; });
+    if (st.pickFor === "start") groups = ["A", "B", "C"].map(function (z) { return {z: z, title: z + "구역 · " + ZONENAME[z]}; });
     else groups = [{z: zone, title: ZONENAME[zone]}];
     groups = groups.map(function (g) {
       return {title: g.title, items: pool.filter(function (p) { return p[3] === g.z; }).map(function (p) {
-        return {name: p[0], kind: p[1], go: function () { if (st.pickFor === "home") { try { window.localStorage.setItem("ansim.home", p[0]); } catch (e) {} self.go(st.pickReturn === "settings" ? "settings" : "home", {home: p[0], q: ""}); return; } if (st.pickFor === "start") self.go(st.pickReturn === "confirm" ? "confirm" : "home", {start: p[0], startGps: false, q: ""}); else { self.setState({q: ""}); self.find(p[0]); } }};
+        return {name: p[0], kind: p[1], go: function () { if (st.pickFor === "start") self.go(st.pickReturn === "confirm" ? "confirm" : "home", {start: p[0], startGps: false, q: ""}); else { self.setState({q: ""}); self.find(p[0]); } }};
       })};
     }).filter(function (g) { return g.items.length; });
     var zonePlaces = G.places.filter(function (p) { return p[3] === zone; });
@@ -663,7 +669,7 @@ class Component extends DCLogic {
         var pool = mine.concat(FAVS[zone]).concat(G.places.filter(function (p) { return p[3] === zone; }).map(function (p) { return p[0]; }));
         return pool.filter(function (n, i) { return pool.indexOf(n) === i && n !== st.start && n !== st.home; }).slice(0, 3);
       })().map(function (n) { return {name: n, go: function () { self.find(n); }}; }),
-      pickTitle: st.pickFor === "home" ? "우리 집은 어디인가요?" : st.pickFor === "start" ? "어디서 출발하세요?" : "어디로 가세요?", q: st.q, groups: groups, noResult: groups.length === 0, showZoneNote: st.pickFor === "dest",
+      pickTitle: st.pickFor === "start" ? "어디서 출발하세요?" : "어디로 가세요?", q: st.q, groups: groups, noResult: groups.length === 0, showZoneNote: st.pickFor === "dest",
       onQ: function (ev) { self.setState({q: ev.target.value}); },
       mapAlt: st.dest + "까지 가는 길 지도", hasWarn: !!warn, warn: warn,
       cards: cards,
@@ -673,7 +679,11 @@ class Component extends DCLogic {
       canInstall: !!window.__installPrompt && !st.onboard,
       showIosHint: !st.onboard && /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone,
       installApp: function () { var p = window.__installPrompt; if (!p) return; p.prompt(); p.userChoice.then(function () { window.__installPrompt = null; self.setState({}); }); },
-      fs: st.big ? 1.2 : 1, bigAria: st.big ? "true" : "false",
+      fs: st.fsz || 1,
+      fsOpts: FS_LEVELS.map(function (l) { var on = l.v === (st.fsz || 1);
+        return {label: l.t, checked: on ? "true" : "false", pick: function () { try { window.localStorage.setItem("ansim.fs", String(l.v)); } catch (e) {} self.setState({fsz: l.v}); },
+          glyph: "font-size: " + Math.round(17 * l.v) + "px; font-weight: 800; line-height: 1",
+          style: "height: 72px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 0; cursor: pointer; " + (on ? "background: " + ACCENT + "; color: #FFFFFF; border: none" : "background: #FFFFFF; color: #1B2433; border: 1.5px solid #E2E7EF")}; }), bigAria: st.big ? "true" : "false",
       bigTrack: "width: 52px; height: 30px; border-radius: 15px; flex-shrink: 0; position: relative; transition: background .2s; background: " + (st.big ? ACCENT : "#C9D0DB"),
       bigKnob: "position: absolute; top: 3px; left: " + (st.big ? 25 : 3) + "px; width: 24px; height: 24px; border-radius: 12px; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0,0,0,0.2); transition: left .2s",
       toggleBig: function () { var b = !st.big; try { window.localStorage.setItem("ansim.big", b ? "1" : "0"); } catch (e) {} self.setState({big: b}); },
@@ -685,6 +695,15 @@ class Component extends DCLogic {
       dots: [0, 1, 2, 3].map(function (i) { var cur = st.screen === "settings" ? 3 : st.step; return {style: "height: 8px; border-radius: 4px; transition: width .2s; " + (i === cur ? "width: 24px; background: " + ACCENT : "width: 8px; background: #D7DCE5")}; }),
       dotsLabel: (st.screen === "settings" ? 4 : st.step + 1) + "단계 중 4단계",
       skipIntro: function () { self.go("settings", {onboard: true}); },
+      introSwipe: {
+        down: function (ev) { self._sw = {x: ev.clientX, y: ev.clientY, t: Date.now()}; },
+        cancel: function () { self._sw = null; },
+        up: function (ev) { var g = self._sw; self._sw = null; if (!g) return; var s = window.__appScale || 1, dx = (ev.clientX - g.x) / s, dy = (ev.clientY - g.y) / s;
+          if (Math.max(Math.abs(dx), Math.abs(dy)) < 50 || Date.now() - g.t > 1200) return;
+          var fwd = Math.abs(dx) > Math.abs(dy) ? dx < 0 : dy < 0; self.introStep(fwd ? 1 : -1); },
+        wheel: function (ev) { ev.preventDefault(); var d = Math.abs(ev.deltaX) > Math.abs(ev.deltaY) ? ev.deltaX : ev.deltaY; if (Math.abs(d) < 12) return;
+          if (self._wheelAt && Date.now() - self._wheelAt < 700) return; self._wheelAt = Date.now(); self.introStep(d > 0 ? 1 : -1); }
+      },
       introNext: function () { if (st.step >= 2) self.go("settings", {onboard: true}); else self.go("intro", {step: st.step + 1}); },
       introPrev: function () { if (st.screen === "settings") self.go("intro", {step: 2}); else self.go("intro", {step: Math.max(0, st.step - 1)}); },
       speakIntro: function () {
@@ -732,11 +751,6 @@ class Component extends DCLogic {
           iconBox: "width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; " + (on ? "background: " + ACCENT + "; color: #FFFFFF" : "background: #F3F5F8; color: #475066"),
           style: "min-height: 84px; border-radius: 18px; display: flex; align-items: center; gap: 14px; padding: 14px 16px; cursor: pointer; background: #FFFFFF; " + (on ? "border: 2px solid " + ACCENT + "; box-shadow: 0 4px 14px rgba(44,90,160,0.14)" : "border: 2px solid #E2E7EF"),
           radio: "width: 22px; height: 22px; border-radius: 11px; box-sizing: border-box; flex-shrink: 0; " + (on ? "border: 7px solid " + ACCENT : "border: 2px solid #B7BFCC")}; }),
-      hasHomeGo: !!st.home && st.home !== st.start, needHome: !st.home, homeName: st.home || "", homeGoAria: "우리 집으로 길 찾기, " + (st.home || ""),
-      goHomeRoute: function () { if (st.home) self.find(st.home); },
-      pickHomeFromHome: function () { self.go("pick", {pickFor: "home", pickReturn: "home", q: ""}); },
-      pickHomeFromSettings: function () { self.go("pick", {pickFor: "home", pickReturn: "settings", q: ""}); },
-      homeLabel: st.home || "아직 등록하지 않았어요", homeAction: st.home ? "바꾸기" : "등록",
       detours: [{k: "near", t: "조금만 돌아갈래요", sub: "가장 빠른 길보다 1.3배까지 (10분 → 13분)"}, {k: "far", t: "많이 돌아가도 괜찮아요", sub: "가장 빠른 길보다 2배까지 (10분 → 20분)"}].map(function (x) { var on = x.k === (st.detour || "near");
         return {t: x.t, sub: x.sub, checked: on ? "true" : "false", pick: function () { try { window.localStorage.setItem("ansim.detour", x.k); } catch (e) {} self.setState({detour: x.k}); },
           style: "min-height: 72px; border-radius: 18px; display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; background: #FFFFFF; " + (on ? "border: 2px solid " + ACCENT : "border: 2px solid #E2E7EF"),

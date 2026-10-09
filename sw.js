@@ -1,5 +1,5 @@
 // 오프라인에서도 열리도록 앱 파일을 저장해 두는 서비스워커
-const CACHE = "ansimgil-v4";
+const CACHE = "ansimgil-v5";
 const FILES = [
  "./",
  "index.html",
