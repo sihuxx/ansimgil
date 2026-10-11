@@ -77,9 +77,11 @@ function routeT(s, t, w, tp) {
   while (v !== S0) { steps.unshift(last[v]); v = prev[v]; }
   return steps;
 }
+// 성남시 교통신호기 시설물현황(2026.06.11)과 이름·위치로 맞춘 교차로 — 확인된 곳만 추가
+var SIGPUB = {A08: {n: "유할인마트 사거리", addr: "은행로 42", ped: 8, snd: 6, tm: 8}};
 function angleOf(st) { return st.e.len ? Math.atan(Math.abs(st.rise) / st.e.len) * 180 / Math.PI : 0; }
 function summarize(steps) {
-  var m = 0, stairs = 0, steep = 0, nosw = 0, unk = 0, segSeen = {}, ev = [], d = [], flat = [], stairsAt = [], hz = [], parts = [], prof = [[0, 0, 1]], ivs = [], hh = 0, key = steps.map(function (x) { return x.e.i; }).join();
+  var sigSeen = {}, m = 0, stairs = 0, steep = 0, nosw = 0, unk = 0, segSeen = {}, ev = [], d = [], flat = [], stairsAt = [], hz = [], parts = [], prof = [[0, 0, 1]], ivs = [], hh = 0, key = steps.map(function (x) { return x.e.i; }).join();
   steps.forEach(function (st) {
     var e = st.e, pts = e.pts.split(" ");
     if (!st.fwd) pts = pts.slice().reverse();
@@ -108,6 +110,7 @@ function summarize(steps) {
       if (e.lt === "어두움") ev.push({at: at, kind: "light", t: "어두운 길"});
     }
     if (e.cross > 0 && e.signal !== "있음") ev.push({at: at, kind: "cross", t: (e.signal === "고장" ? "신호 고장" : "신호 없는") + " 횡단보도"});
+    if (e.cross > 0 && SIGPUB[e.seg] && !sigSeen[e.seg]) { sigSeen[e.seg] = 1; var sp = SIGPUB[e.seg], sf = [sp.snd > 0 ? "음성 안내" : "", sp.tm > 0 ? "남은 시간 표시" : ""].filter(Boolean).join("·"); if (sf) ev.push({at: at, kind: "cross", t: sf + " 신호등 설치"}); }
     if (e.status === "미확인") { unk += e.len; ev.push({at: at, kind: "unk", t: "정보 없음", unk: e.len}); }
     var known = e.status !== "미확인", slopeKnown = known && !SLOPE_UNK[e.seg], ang = angleOf(st);
     var pk = e.stairs === "있음" ? "stairs" : !known ? "unk" : e.sw === "없음" ? "nosw" : ang >= 4 ? (e.mixed || st.rise > 0 ? "up" : "down") : "flat";
