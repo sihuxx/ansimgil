@@ -619,16 +619,6 @@ body.desktop #app{border-radius:28px;box-shadow:0 10px 40px rgba(25,31,28,.18)}
         <span style="font-size: calc(15px * var(--fs, 1)); color: #4A524D">37m 이동 · 신호 고장 횡단보도</span>
       </div>
     </div>
-    <sc-if value="{{canInstall}}" hint-placeholder-val="{{ false }}">
-      <button onClick="{{installApp}}" style="margin-top: 10px; min-height: 64px; border-radius: 18px; display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; background: #EAF4EE; border: none; text-align: left; font-size: calc(18px * var(--fs, 1)); font-weight: 700; color: #1F7A4D">
-        <img src="assets/logo.png" alt="" width="36" height="36" style="width: 36px; height: 36px">홈 화면에 앱 추가하기
-      </button>
-    </sc-if>
-    <sc-if value="{{showIosHint}}" hint-placeholder-val="{{ false }}">
-      <div style="margin-top: 10px; border-radius: 18px; padding: 14px 16px; background: #F3F5F4; font-size: calc(15px * var(--fs, 1)); color: #4A524D; line-height: 1.6">
-        <b style="color: #191F1C">아이폰에서 앱처럼 쓰기</b><br>사파리 아래쪽 공유 버튼(□↑) → <b>홈 화면에 추가</b>를 누르세요.
-      </div>
-    </sc-if>
     <sc-if value="{{notOnboard}}" hint-placeholder-val="{{ false }}">
       <h2 style="margin: 18px 0 2px; font-size: calc(17px * var(--fs, 1)); font-weight: 700; color: #6B756F">도움말</h2>
       <button onClick="{{replayOnboard}}" style="min-height: 72px; border-radius: 18px; display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; background: #F3F5F4; border: none; text-align: left; color: #191F1C">
@@ -639,13 +629,18 @@ body.desktop #app{border-radius:28px;box-shadow:0 10px 40px rgba(25,31,28,.18)}
         </span>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A938D" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" style="flex-shrink: 0"><path d="M9 5l7 7-7 7"></path></svg>
       </button>
-      <h2 style="margin: 28px 0 4px; font-size: calc(14px * var(--fs, 1)); font-weight: 700; color: #6B756F">시연용 · 예외 화면</h2>
-      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
-        <button onClick="{{showE1}}" style="height: 48px; border: none; border-radius: 12px; background: #F3F5F4; font-size: calc(15px * var(--fs, 1)); cursor: pointer">같은 장소</button>
-        <button onClick="{{showE2}}" style="height: 48px; border: none; border-radius: 12px; background: #F3F5F4; font-size: calc(15px * var(--fs, 1)); cursor: pointer">위치 사용 불가</button>
-        <button onClick="{{showE3}}" style="height: 48px; border: none; border-radius: 12px; background: #F3F5F4; font-size: calc(15px * var(--fs, 1)); cursor: pointer">길 없음</button>
-        <button onClick="{{showE4}}" style="height: 48px; border: none; border-radius: 12px; background: #F3F5F4; font-size: calc(15px * var(--fs, 1)); cursor: pointer">연결 오류</button>
-      </div>
+      <h2 style="margin: 18px 0 2px; font-size: calc(17px * var(--fs, 1)); font-weight: 700; color: #6B756F">앱 설치</h2>
+      <button onClick="{{inst.go}}" aria-disabled="{{inst.disabled}}" style="{{inst.style}}">
+        <span style="width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; background: #FFFFFF; display: flex; align-items: center; justify-content: center"><img src="assets/logo.png" alt="" width="30" height="30" style="width: 30px; height: 30px; display: block"></span>
+        <span style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+          <span style="font-size: calc(18px * var(--fs, 1)); font-weight: 700">{{inst.title}}</span>
+          <span style="font-size: calc(14px * var(--fs, 1)); color: #6B756F">{{inst.sub}}</span>
+        </span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8A938D" stroke-width="2.4" stroke-linecap="round" aria-hidden="true" style="flex-shrink: 0; display: {{inst.chev}}"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>
+      </button>
+      <sc-if value="{{inst.showTip}}" hint-placeholder-val="{{ false }}">
+        <div role="status" style="border-radius: 18px; padding: 14px 16px; background: #EAF4EE; font-size: calc(16px * var(--fs, 1)); color: #191F1C; line-height: 1.6; flex-shrink: 0; white-space: pre-line">{{inst.tip}}</div>
+      </sc-if>
     </sc-if>
   </div>
   <div style="padding: 10px 20px 24px">

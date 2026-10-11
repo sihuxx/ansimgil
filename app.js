@@ -686,9 +686,15 @@ class Component extends DCLogic {
       mainGlow: isSafe ? ACCENT : INK,
       safeDisp: R && isSafe ? "inline" : "none", safeT: "translate(" + tx + "," + ty + ")" + (rq !== 1 ? " scale(" + rq.toFixed(3) + ")" : ""),
       hasDetailBanner: !!(R && isSafe), detailBanner: !R ? {} : {t: reason, s: !R.same && extra > 0 ? "+" + extra + "m" : ""},
-      canInstall: !!window.__installPrompt && !st.onboard,
-      showIosHint: !st.onboard && /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.navigator.standalone,
-      installApp: function () { var p = window.__installPrompt; if (!p) return; p.prompt(); p.userChoice.then(function () { window.__installPrompt = null; self.setState({}); }); },
+      inst: (function () {
+        var standalone = false; try { standalone = window.matchMedia("(display-mode: standalone)").matches || !!window.navigator.standalone; } catch (e) {}
+        var ios = /iphone|ipad|ipod/i.test(navigator.userAgent), canPrompt = !!window.__installPrompt;
+        var tip = ios ? "아이폰은 이렇게 추가해요\n① 사파리 아래쪽 공유 버튼(□↑)을 누르세요\n② '홈 화면에 추가'를 누르세요" : "브라우저에서 이렇게 추가해요\n① 오른쪽 위 점 세 개(⋮) 메뉴를 누르세요\n② '홈 화면에 추가' 또는 '앱 설치'를 누르세요";
+        return {title: standalone ? "홈 화면에 추가돼 있어요" : "홈 화면에 앱 추가하기", sub: standalone ? "앱 아이콘으로 바로 열 수 있어요" : "앱처럼 아이콘을 눌러 바로 열 수 있어요",
+          disabled: standalone ? "true" : "false", chev: standalone ? "none" : "block", showTip: !standalone && !!st.installTip, tip: tip,
+          style: "min-height: 72px; border-radius: 18px; display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: #F3F5F4; border: none; text-align: left; color: #191F1C; cursor: " + (standalone ? "default" : "pointer"),
+          go: function () { if (standalone) return; var p = window.__installPrompt; if (canPrompt && p) { p.prompt(); p.userChoice.then(function () { window.__installPrompt = null; self.setState({installTip: false}); }); } else self.setState({installTip: !st.installTip}); }};
+      })(),
       fs: st.fsz || 1,
       fsOpts: FS_LEVELS.map(function (l) { var on = l.v === (st.fsz || 1);
         return {label: l.t, checked: on ? "true" : "false", pick: function () { try { window.localStorage.setItem("ansim.fs", String(l.v)); } catch (e) {} self.setState({fsz: l.v}); },
