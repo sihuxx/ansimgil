@@ -113,7 +113,13 @@ body.desktop #app{border-radius:28px;box-shadow:0 10px 40px rgba(25,31,28,.18)}
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B756F" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
     <label for="q" style="position: absolute; width: 1px; height: 1px; overflow: hidden">장소 검색</label>
     <input id="q" value="{{q}}" onInput="{{onQ}}" placeholder="장소 이름 검색" style="flex: 1; border: none; background: transparent; font-size: calc(18px * var(--fs, 1)); color: #191F1C; outline: none; min-width: 0">
+    <button onClick="{{voice.go}}" aria-label="{{voice.aria}}" aria-pressed="{{voice.pressed}}" style="{{voice.btn}}">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11a7 7 0 0 0 14 0M12 18v3"></path></svg>
+    </button>
   </div>
+  <sc-if value="{{voice.show}}" hint-placeholder-val="{{ false }}">
+    <div role="status" aria-live="polite" style="{{voice.boxStyle}}">{{voice.msg}}</div>
+  </sc-if>
   <div style="flex: 1; overflow-y: auto; padding: 4px 20px 20px">
     <sc-if value="{{showGps}}" hint-placeholder-val="{{ false }}">
       <button onClick="{{useGps}}" style="width: 100%; min-height: 60px; border: none; border-bottom: 1px solid #EEF1EF; background: #FFFFFF; display: flex; align-items: center; gap: 12px; padding: 6px 2px; cursor: pointer; text-align: left">
