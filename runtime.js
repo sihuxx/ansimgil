@@ -135,7 +135,7 @@
     tpl = document.getElementById("app-template");
     root = document.getElementById("app");
     fit(); window.addEventListener("resize", schedule);
-    delegate("click"); delegate("input");
+    delegate("click"); delegate("input"); delegate("change");
     // 지도 확대·이동 (손가락 두 개로 벌리기, 끌기, 마우스 휠)
     ["pointerdown", "pointermove", "pointerup", "pointercancel"].forEach(function (t) { delegate(t); });
     delegate("wheel", {passive: false});

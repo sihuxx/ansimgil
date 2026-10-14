@@ -462,6 +462,52 @@ body.desktop #app{border-radius:28px;box-shadow:0 10px 40px rgba(25,31,28,.18)}
       </sc-if>
     </div>
   </div>
+  <sc-if value="{{nav.started}}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{repOpen}}" style="position: absolute; left: 12px; bottom: {{nav.ctrlBottom}}px; z-index: 5; height: 48px; padding: 0 16px; border: none; border-radius: 24px; background: #FFFFFF; color: #1F7A4D; box-shadow: 0 2px 8px rgba(25,31,28,0.18); display: flex; align-items: center; gap: 8px; font-size: calc(16px * var(--fs, 1)); font-weight: 700; cursor: pointer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>이 길 사진으로 알리기</button>
+  </sc-if>
+  <sc-if value="{{rep.show}}" hint-placeholder-val="{{ false }}">
+    <div role="dialog" aria-label="길 상태 알리기" style="position: absolute; inset: 0; z-index: 30; background: #FFFFFF; display: flex; flex-direction: column">
+      <div style="display: flex; align-items: center; gap: 6px; padding: 14px 12px 6px 6px">
+        <button onClick="{{rep.close}}" aria-label="닫기" style="width: 44px; height: 44px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#191F1C" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+        <span style="display: flex; flex-direction: column; min-width: 0">
+          <span style="font-size: calc(19px * var(--fs, 1)); font-weight: 800">이 길 사진으로 알리기</span>
+          <span style="font-size: calc(14px * var(--fs, 1)); color: #6B756F">{{rep.where}}</span>
+        </span>
+      </div>
+      <div style="flex: 1; overflow-y: auto; padding: 8px 20px 20px; display: flex; flex-direction: column; gap: 14px">
+        <sc-if value="{{rep.hasImg}}" hint-placeholder-val="{{ false }}"><img src="{{rep.img}}" alt="찍은 사진" style="width: 100%; max-height: 420px; object-fit: contain; border-radius: 16px; background: #F3F5F4; flex-shrink: 0"></sc-if>
+        <sc-if value="{{rep.isPick}}" hint-placeholder-val="{{ true }}">
+          <div style="border-radius: 18px; background: #EAF4EE; padding: 16px; font-size: calc(17px * var(--fs, 1)); line-height: 1.6; color: #191F1C">지금 걷는 길을 앞쪽으로 찍어 주세요.<br>AI가 <b>계단이 있는지</b> 먼저 살펴보고, 마지막 확인은 직접 해 주시면 돼요.</div>
+          <label style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 58px; border-radius: 14px; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer; box-sizing: border-box; padding: 8px 14px; text-align: center; border: none; background: #1F7A4D; color: #FFFFFF"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"></path><circle cx="12" cy="13" r="3.5"></circle></svg>사진 찍기<input type="file" accept="image/*" capture="environment" onChange="{{rep.onFile}}" style="display: none"></label>
+          <label style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 58px; border-radius: 14px; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer; box-sizing: border-box; padding: 8px 14px; text-align: center; border: 2px solid #D6DCD8; background: #FFFFFF; color: #191F1C">앨범에서 고르기<input type="file" accept="image/*" onChange="{{rep.onFile}}" style="display: none"></label>
+          <p style="margin: 0; font-size: calc(14px * var(--fs, 1)); color: #6B756F; line-height: 1.5">사진은 이 휴대폰 안에서만 살펴보고 어디에도 보내지 않아요.</p>
+        </sc-if>
+        <sc-if value="{{rep.isBusy}}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="border-radius: 18px; background: #F3F5F4; padding: 16px; font-size: calc(17px * var(--fs, 1)); line-height: 1.6; color: #191F1C; font-weight: 700">{{rep.msg}}</div>
+        </sc-if>
+        <sc-if value="{{rep.isAsk}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: calc(14px * var(--fs, 1)); font-weight: 700; color: #1F7A4D">AI 판단</span>
+            <span style="font-size: calc(22px * var(--fs, 1)); font-weight: 800">{{rep.q}}</span>
+            <span style="font-size: calc(15px * var(--fs, 1)); color: #4A524D; line-height: 1.5">{{rep.qSub}}</span>
+            <span style="font-size: calc(17px * var(--fs, 1)); font-weight: 700; margin-top: 6px">AI 판단이 맞나요?</span>
+          </div>
+          <button onClick="{{rep.a}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 58px; border-radius: 14px; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer; box-sizing: border-box; padding: 8px 14px; text-align: center; border: none; background: #1F7A4D; color: #FFFFFF">{{rep.aTxt}}</button>
+          <button onClick="{{rep.b}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 58px; border-radius: 14px; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer; box-sizing: border-box; padding: 8px 14px; text-align: center; border: 2px solid #D6DCD8; background: #FFFFFF; color: #191F1C">{{rep.bTxt}}</button>
+        </sc-if>
+        <sc-if value="{{rep.isManual}}" hint-placeholder-val="{{ false }}">
+          <div style="border-radius: 18px; background: #FFF4E5; padding: 16px; font-size: calc(17px * var(--fs, 1)); line-height: 1.6; color: #191F1C">AI를 불러오지 못했어요.<br>사진 속 길에 계단이 있는지 직접 알려 주세요.</div>
+          <button onClick="{{rep.yes}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 58px; border-radius: 14px; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer; box-sizing: border-box; padding: 8px 14px; text-align: center; border: none; background: #1F7A4D; color: #FFFFFF">계단이 있어요</button>
+          <button onClick="{{rep.no}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 58px; border-radius: 14px; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer; box-sizing: border-box; padding: 8px 14px; text-align: center; border: 2px solid #D6DCD8; background: #FFFFFF; color: #191F1C">계단 없어요</button>
+        </sc-if>
+        <sc-if value="{{rep.isDone}}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="border-radius: 18px; background: #EAF4EE; padding: 16px; font-size: calc(18px * var(--fs, 1)); line-height: 1.6; color: #191F1C; font-weight: 700">{{rep.msg}}</div>
+          <button onClick="{{rep.close}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 58px; border-radius: 14px; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer; box-sizing: border-box; padding: 8px 14px; text-align: center; border: none; background: #1F7A4D; color: #FFFFFF">안내로 돌아가기</button>
+          <button onClick="{{rep.again}}" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 58px; border-radius: 14px; font-size: calc(18px * var(--fs, 1)); font-weight: 700; cursor: pointer; box-sizing: border-box; padding: 8px 14px; text-align: center; border: 2px solid #D6DCD8; background: #FFFFFF; color: #191F1C">다른 사진 알리기</button>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
 </div>
 </sc-if>
 
@@ -626,6 +672,19 @@ body.desktop #app{border-radius:28px;box-shadow:0 10px 40px rgba(25,31,28,.18)}
       </div>
     </div>
     <sc-if value="{{notOnboard}}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{reps.has}}" hint-placeholder-val="{{ false }}">
+        <h2 style="margin: 18px 0 2px; font-size: calc(17px * var(--fs, 1)); font-weight: 700; color: #6B756F">내가 알린 길</h2>
+        <p style="margin: 0 0 4px; font-size: calc(14px * var(--fs, 1)); color: #6B756F; line-height: 1.5">길 안내 중 사진으로 알려 주신 내용이에요. '계단 있음'은 길찾기에 반영돼요.</p>
+        <sc-for list="{{reps.items}}" as="q" hint-placeholder-count="1">
+          <div style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: #F3F5F4">
+            <span style="display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0">
+              <span style="font-size: calc(17px * var(--fs, 1)); font-weight: 700">{{q.where}}</span>
+              <span style="font-size: calc(14px * var(--fs, 1)); color: #6B756F">{{q.what}} · {{q.when}}</span>
+            </span>
+            <button onClick="{{q.del}}" style="height: 40px; padding: 0 12px; border: 1.5px solid #D6DCD8; border-radius: 10px; background: #FFFFFF; font-size: calc(15px * var(--fs, 1)); font-weight: 700; color: #4A524D; cursor: pointer">지우기</button>
+          </div>
+        </sc-for>
+      </sc-if>
       <h2 style="margin: 18px 0 2px; font-size: calc(17px * var(--fs, 1)); font-weight: 700; color: #6B756F">도움말</h2>
       <button onClick="{{replayOnboard}}" style="min-height: 72px; border-radius: 18px; display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; background: #F3F5F4; border: none; text-align: left; color: #191F1C">
         <span style="width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0; background: #FFFFFF; display: flex; align-items: center; justify-content: center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F7A4D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5z"></path><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v16h5.5a1.5 1.5 0 0 0 1.5-1.5z"></path></svg></span>

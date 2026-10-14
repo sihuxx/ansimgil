@@ -35,6 +35,18 @@ function cost(st, prof) {
   if (SEGNOTE[e.seg]) c += e.len * 0.1;
   return c;
 }
+// 주민 제보: 사진 → AI가 계단 여부를 먼저 판단 → 사람이 맞다/아니다 확인 → 확인된 것만 길 정보에 반영 (이 기기 안에만 저장)
+var REP_KEY = "ansim.reports", AI_DIR = "assets/ai/", AI_LONG = 448, AI_THR = 0.03;
+function loadReports() { try { var r = JSON.parse(window.localStorage.getItem(REP_KEY) || "[]"); return Array.isArray(r) ? r : []; } catch (e) { return []; } }
+function saveReports(r) { try { window.localStorage.setItem(REP_KEY, JSON.stringify(r)); } catch (e) {} }
+var EOBJ = {}; Object.keys(ADJ).forEach(function (u) { ADJ[u].forEach(function (st) { EOBJ[st.e.i] = st.e; }); });
+function applyReports(list) {
+  Object.keys(EOBJ).forEach(function (k) { var e = EOBJ[k]; if (e.rep) { e.stairs = e.orig; e.rep = false; } });
+  list.forEach(function (r) { var e = EOBJ[r.ei]; if (e && r.stairs && e.stairs !== "있음") { e.orig = e.stairs; e.stairs = "있음"; e.rep = true; } });
+}
+applyReports(loadReports());
+function stairTxt(e) { return e.rep ? "계단 (주민 제보)" : "계단 " + e.steps + "단"; }
+function loadImg(file) { return new Promise(function (ok, no) { var u = URL.createObjectURL(file), im = new Image(); im.onload = function () { ok(im); }; im.onerror = function () { no(new Error("img")); }; im.src = u; }); }
 function route(s, t, w) {
   var dist = {}, prev = {}, done = {}; dist[s] = 0;
   while (true) {
@@ -92,14 +104,14 @@ function stepSec(st) {
 function timeAt(r, at) { var t = 0; for (var i = 0; i < r.ivs.length; i++) { var v = r.ivs[i]; if (at >= v.b) t = v.tb; else { if (at > v.a) t = v.ta + (v.tb - v.ta) * (at - v.a) / (v.b - v.a); break; } } return t; }
 function angleOf(st) { return st.e.len ? Math.atan(Math.abs(st.rise) / st.e.len) * 180 / Math.PI : 0; }
 function summarize(steps) {
-  var sec = 0, sigSeen = {}, m = 0, stairs = 0, steep = 0, nosw = 0, unk = 0, segSeen = {}, ev = [], d = [], flat = [], stairsAt = [], hz = [], parts = [], prof = [[0, 0, 1]], ivs = [], hh = 0, key = steps.map(function (x) { return x.e.i; }).join();
+  var sec = 0, sigSeen = {}, m = 0, repSt = 0, stairs = 0, steep = 0, nosw = 0, unk = 0, segSeen = {}, ev = [], d = [], flat = [], stairsAt = [], hz = [], parts = [], prof = [[0, 0, 1]], ivs = [], hh = 0, key = steps.map(function (x) { return x.e.i; }).join();
   steps.forEach(function (st) {
     var e = st.e, pts = e.pts.split(" ");
     if (!st.fwd) pts = pts.slice().reverse();
     d.push((d.length ? "L" : "M") + pts.join(" L"));
     pts.forEach(function (q) { var c = q.split(","); flat.push([+c[0], +c[1]]); });
     var mp = pts[Math.floor(pts.length / 2)].split(","), hx = +mp[0], hy = +mp[1];
-    if (e.stairs === "있음" && !segSeen[e.seg]) { stairsAt.push({seg: e.seg, x: hx, y: hy, steps: e.steps}); hz.push({seg: e.seg, x: hx, y: hy, rank: 0, icon: "stairs", label: "계단 " + e.steps + "단", note: "계단 " + e.steps + "단이 있어요"}); }
+    if (e.stairs === "있음" && !segSeen[e.seg]) { stairsAt.push({seg: e.seg, x: hx, y: hy, steps: e.steps}); hz.push({seg: e.seg, x: hx, y: hy, rank: 0, icon: "stairs", label: stairTxt(e), note: e.rep ? "주민이 알려준 계단이 있어요" : "계단 " + e.steps + "단이 있어요"}); }
     if (!segSeen[e.seg] && e.status !== "미확인" && e.stairs !== "있음" && angleOf(st) >= 7) hz.push({seg: e.seg, x: hx, y: hy, rank: 2, icon: "slope", label: e.mixed ? "가파른 언덕" : (st.rise > 0 ? "가파른 오르막" : "가파른 내리막"), note: (e.mixed ? "가파른 언덕" : (st.rise > 0 ? "가파른 오르막" : "가파른 내리막")) + "이 있어요"});
     if (!segSeen[e.seg] && e.sw === "없음") hz.push({seg: e.seg, x: hx, y: hy, rank: 1, icon: "car", label: "차와 같이 걷는 길", note: "차와 같이 걷는 좁은 길이 있어요"});
     if (e.cross > 0 && e.signal !== "있음") hz.push({seg: e.seg + "x" + e.i, x: hx, y: hy, rank: 3, icon: "cross", label: e.signal === "고장" ? "신호 고장" : "신호 없는 횡단보도", note: (e.signal === "고장" ? "신호등 고장 난 " : "신호 없는 ") + "횡단보도가 있어요"});
@@ -109,7 +121,7 @@ function summarize(steps) {
     var first = !segSeen[e.seg]; segSeen[e.seg] = 1;
     var at = Math.round(m);
     if (first) {
-      if (e.stairs === "있음") { stairs += e.steps; ev.push({at: at, kind: "stairs", t: "계단 " + e.steps + "단", hot: true}); }
+      if (e.stairs === "있음") { stairs += e.steps; if (e.rep) repSt++; ev.push({at: at, kind: "stairs", t: stairTxt(e), hot: true}); }
       else if (e.status !== "미확인") {
         var a = angleOf(st);
         if (a >= 7) { steep++; ev.push({at: at, kind: "slope", t: "가파른 " + (e.mixed ? "언덕" : (st.rise > 0 ? "오르막" : "내리막")), hot: true}); }
@@ -127,7 +139,7 @@ function summarize(steps) {
     var known = e.status !== "미확인", slopeKnown = known && !SLOPE_UNK[e.seg], ang = angleOf(st);
     var pk = e.stairs === "있음" ? "stairs" : !known ? "unk" : e.sw === "없음" ? "nosw" : ang >= 4 ? (e.mixed || st.rise > 0 ? "up" : "down") : "flat";
     var lp = parts[parts.length - 1]; if (lp && lp.k === pk) lp.len += e.len; else parts.push({k: pk, len: e.len});
-    ivs.push({a: m, b: m + e.len, ta: sec, tb: sec + stepSec(st), unk: !known, seg: e.seg});
+    ivs.push({a: m, b: m + e.len, ta: sec, tb: sec + stepSec(st), unk: !known, seg: e.seg, ei: e.i});
     if (!slopeKnown) prof.push([m + e.len, hh, 0]);
     else if (e.mixed) { prof.push([m + e.len / 2, hh + Math.abs(e.rise) / 2, 1]); prof.push([m + e.len, hh, 1]); }
     else { hh += st.rise; prof.push([m + e.len, hh, 1]); }
@@ -137,7 +149,7 @@ function summarize(steps) {
   var tot = 0, acc = 0, mid = flat[0];
   for (var i = 1; i < flat.length; i++) tot += Math.hypot(flat[i][0] - flat[i - 1][0], flat[i][1] - flat[i - 1][1]);
   for (var j = 1; j < flat.length; j++) { var sl = Math.hypot(flat[j][0] - flat[j - 1][0], flat[j][1] - flat[j - 1][1]); if (acc + sl >= tot / 2) { var f = sl ? (tot / 2 - acc) / sl : 0; mid = [flat[j - 1][0] + (flat[j][0] - flat[j - 1][0]) * f, flat[j - 1][1] + (flat[j][1] - flat[j - 1][1]) * f]; break; } acc += sl; }
-  return {m: Math.round(m), min: Math.max(1, Math.round(sec / 60)), sec: sec, stairs: stairs, steep: steep, nosw: nosw, unk: Math.round(unk), ev: ev, d: d.join(" "), mid: mid, stairsAt: stairsAt, segs: segSeen, hz: hz, key: key, parts: parts, prof: prof, ivs: ivs, flat: flat};
+  return {m: Math.round(m), min: Math.max(1, Math.round(sec / 60)), sec: sec, stairs: stairs, repSt: repSt, steep: steep, nosw: nosw, unk: Math.round(unk), ev: ev, d: d.join(" "), mid: mid, stairsAt: stairsAt, segs: segSeen, hz: hz, key: key, parts: parts, prof: prof, ivs: ivs, flat: flat};
 }
 var SLOPE_UNK = {};
 var PROJ = {A: [100.948065, 37.4553735, 70239.18], B: [100.947186, 37.458056, 89783.28], C: [100.949630, 37.4522215, 83860.49]}, KX = Math.cos(37.456 * Math.PI / 180);
@@ -296,7 +308,7 @@ function bigramScore(a, b) {
 }
 function tagsOf(r) {
   var t = [];
-  if (r.stairs > 0) t.push("계단 " + r.stairs + "단");
+  if (r.stairs > 0) t.push("계단 " + r.stairs + "단"); else if (r.repSt > 0) t.push("계단 (주민 제보)");
   if (r.steep > 0) t.push("급경사 " + r.steep);
   if (r.nosw > 0) t.push("차와 같이 걷는 길");
   if (r.unk > 0 && t.length < 2) t.push("정보 없음 " + r.unk + "m");
@@ -431,7 +443,7 @@ class Component extends DCLogic {
     else if (st.step > 0) this.go("intro", {step: st.step - 1});
   }
   place(n) { return G.places.filter(function (p) { return p[0] === n; })[0]; }
-  go(screen, extra) { if (this._rec) { try { this._rec.abort(); } catch (e) {} this._rec = null; } if (screen !== "nav") this.stopTimer(); try { window.speechSynthesis.cancel(); } catch (e) {} this.setState(Object.assign({screen: screen, speaking: false, toast: false, mv: {}, voiceState: ""}, extra || {})); }
+  go(screen, extra) { if (this._rec) { try { this._rec.abort(); } catch (e) {} this._rec = null; } if (screen !== "nav") this.stopTimer(); try { window.speechSynthesis.cancel(); } catch (e) {} this.setState(Object.assign({screen: screen, speaking: false, toast: false, mv: {}, voiceState: "", rep: null}, extra || {})); }
   find(dest) {
     if (this.state.screen === "loading") return;
     var s = this.place(this.state.start), d = this.place(dest), self = this;
@@ -445,6 +457,63 @@ class Component extends DCLogic {
     if (this.timer) clearTimeout(this.timer);
     this.timer = setTimeout(function () { var R = self.calc(); self.setState(R ? {screen: "result"} : {screen: "error", err: "e3"}); }, 900);
   }
+  repOpen() {
+    var R = this.calc(); if (!R) return;
+    var st = this.state, sel = R.alts.filter(function (a) { return a.k === st.sel; })[0], r = sel ? sel.r : R.A, L = legsOf(r, st.start, st.dest);
+    var i = Math.min(st.navStep || 0, L.length - 1), at = Math.min(L[i].at + 3, r.m - 1), v = r.ivs.filter(function (q) { return at >= q.a && at < q.b; })[0] || r.ivs[r.ivs.length - 1];
+    var where = L[i].lm ? L[i].lm.name + " 근처 길" : i === 0 ? st.start + "에서 출발한 길" : st.dest + " 가는 길 " + (i + 1) + "번째 구간";
+    this.setState({rep: {phase: "pick", ei: v.ei, seg: v.seg, where: where}});
+    say("지금 걷는 길의 사진을 찍어 주세요. 계단이 있는지 AI가 먼저 살펴볼게요.");
+  }
+  repFile(ev) {
+    var f = ev.target.files && ev.target.files[0], self = this, r = this.state.rep; if (!f || !r) return;
+    try { ev.target.value = ""; } catch (e) {}
+    var first = !this._aiReady;
+    this.setState({rep: Object.assign({}, r, {phase: "busy", img: URL.createObjectURL(f), msg: first ? "AI를 처음 불러오는 중이에요. 처음 한 번만 30초쯤 걸려요 (약 40MB, 와이파이 권장)" : "AI가 사진을 살펴보는 중이에요"})});
+    setTimeout(function () {
+      self.runAI(f).then(function (o) {
+        self._aiReady = true; var cur = self.state.rep; if (!cur) return;
+        var found = o.pct >= AI_THR;
+        self.setState({rep: Object.assign({}, cur, {phase: "ask", img: o.img, pct: o.pct, found: found})});
+        say(found ? "계단이 있는 것 같아요. 맞나요?" : "계단은 보이지 않아요. 맞나요?");
+      }, function () { var cur = self.state.rep; if (cur) self.setState({rep: Object.assign({}, cur, {phase: "manual"})}); });
+    }, 60);
+  }
+  loadAI() {
+    if (this._aiP) return this._aiP;
+    var self = this;
+    this._aiP = new Promise(function (ok, no) {
+      function make() { try { ort.env.wasm.wasmPaths = new URL(AI_DIR, location.href).href; ort.env.wasm.numThreads = 1; ort.InferenceSession.create(AI_DIR + "stairs_v2.onnx", {executionProviders: ["wasm"]}).then(ok, no); } catch (e) { no(e); } }
+      if (window.ort) { make(); return; }
+      var sc = document.createElement("script"); sc.src = AI_DIR + "ort.wasm.min.js"; sc.onload = make; sc.onerror = function () { no(new Error("ort")); }; document.head.appendChild(sc);
+    });
+    this._aiP.catch(function () { self._aiP = null; });
+    return this._aiP;
+  }
+  runAI(file) {
+    return Promise.all([this.loadAI(), loadImg(file)]).then(function (a) {
+      var sess = a[0], img = a[1], w0 = img.naturalWidth, h0 = img.naturalHeight, k = AI_LONG / Math.max(w0, h0);
+      var W = Math.max(32, Math.round(w0 * k / 32) * 32), H = Math.max(32, Math.round(h0 * k / 32) * 32), n = W * H;
+      var c = document.createElement("canvas"); c.width = W; c.height = H; var g = c.getContext("2d"); g.drawImage(img, 0, 0, W, H);
+      var im = g.getImageData(0, 0, W, H), d = im.data, x = new Float32Array(3 * n);
+      for (var i = 0; i < n; i++) { x[i] = d[i * 4]; x[n + i] = d[i * 4 + 1]; x[2 * n + i] = d[i * 4 + 2]; }
+      return sess.run({img: new ort.Tensor("float32", x, [1, 3, H, W])}).then(function (o) {
+        var cls = o.cls.data, cnt = 0;
+        for (var j = 0; j < n; j++) if (cls[j] === 1) { cnt++; d[j * 4] = d[j * 4] * 0.35 + 255 * 0.65; d[j * 4 + 1] = d[j * 4 + 1] * 0.35 + 120 * 0.65; d[j * 4 + 2] = d[j * 4 + 2] * 0.35; }
+        g.putImageData(im, 0, 0);
+        return {pct: cnt / n, img: c.toDataURL("image/jpeg", 0.85)};
+      });
+    });
+  }
+  repAnswer(stairs) {
+    var r = this.state.rep; if (!r) return;
+    var list = loadReports().filter(function (q) { return q.ei !== r.ei; });
+    list.push({ei: r.ei, seg: r.seg, where: r.where, stairs: stairs, ai: r.pct === undefined ? null : Math.round(r.pct * 1000) / 10, aiSaid: r.found === undefined ? null : r.found, t: Date.now()});
+    saveReports(list); applyReports(list); this._repDirty = true;
+    var msg = stairs ? "고마워요! 이 길을 '계단 있음'으로 바꿨어요. 다음 길찾기부터 이 계단을 피해서 안내해요." : "고마워요! 계단이 없는 길로 기록했어요.";
+    this.setState({rep: Object.assign({}, r, {phase: "done", msg: msg, reports: list.length})}); say(msg);
+  }
+  repRemove(ei) { var list = loadReports().filter(function (q) { return q.ei !== ei; }); saveReports(list); applyReports(list); this._repDirty = true; this.setState({repTick: Date.now()}); }
   sayStep(i) {
     var R = this.calc(); if (!R) return;
     var st = this.state, sel = R.alts.filter(function (a) { return a.k === st.sel; })[0], r = sel ? sel.r : R.A, L = legsOf(r, st.start, st.dest), g = L[Math.min(i, L.length - 1)];
@@ -466,6 +535,7 @@ class Component extends DCLogic {
   }
   calc() {
     var ck = this.state.start + "|" + this.state.dest + "|" + this.state.prof + "|" + this.state.detour;
+    if (this._repDirty && this.state.screen !== "nav") { this._ck = null; this._repDirty = false; }
     if (this._ck === ck) return this._cv;
     this._ck = ck; this._cv = this.calc2(); return this._cv;
   }
@@ -507,6 +577,7 @@ class Component extends DCLogic {
       if (R.same) reason = "가장 짧은 길과 같아요";
       else {
         if (R.S.stairs > R.A.stairs) reason = "계단 " + (R.S.stairs - R.A.stairs) + "단을 피해요";
+        else if ((R.S.repSt || 0) > (R.A.repSt || 0)) reason = "주민이 알려준 계단을 피해요";
         else if (R.S.steep > R.A.steep) reason = "급경사를 피해요";
         else if (R.S.nosw > R.A.nosw) reason = "차와 같이 걷는 길을 피해요";
         else reason = "보행 부담이 적은 길이에요";
@@ -526,7 +597,7 @@ class Component extends DCLogic {
       return {t: t, isGood: !!good, isStairs: icon === "stairs", isSlope: icon === "slope", isCar: icon === "car", isCross: icon === "cross", isLight: icon === "light", isRough: icon === "rough", isUnk: icon === "unk",
         style: "display: inline-flex; align-items: center; gap: 3px; font-size: calc(13px * var(--fs, 1)); font-weight: 600; padding: 3px 7px; border-radius: 6px; " + (good ? "color: " + ACCENT + "; background: #EAF4EE" : "color: #4A524D; background: #F1F3F2")};
     }
-    var goodShort = !R ? "" : (R.same ? "가장 짧은 길과 같음" : (R.S.stairs > R.A.stairs ? "계단 " + (R.S.stairs - R.A.stairs) + "단 피함" : R.S.steep > R.A.steep ? "급경사 피함" : R.S.nosw > R.A.nosw ? "좁은 차길 피함" : "보행 부담 적음"));
+    var goodShort = !R ? "" : (R.same ? "가장 짧은 길과 같음" : (R.S.stairs > R.A.stairs ? "계단 " + (R.S.stairs - R.A.stairs) + "단 피함" : (R.S.repSt || 0) > (R.A.repSt || 0) ? "제보된 계단 피함" : R.S.steep > R.A.steep ? "급경사 피함" : R.S.nosw > R.A.nosw ? "좁은 차길 피함" : "보행 부담 적음"));
     function altBadges(r) {
       var seen = {}, out = [];
       r.hz.filter(function (h) { return !R.A.segs[h.seg]; }).sort(function (a, b) { return a.rank - b.rank; }).forEach(function (h) { if (!seen[h.label] && out.length < 2) { seen[h.label] = 1; out.push(mkBadge(h.label, h.icon)); } });
@@ -623,7 +694,7 @@ class Component extends DCLogic {
       });
       var sp0 = [f[0][0] * Z + tx, f[0][1] * Z + ty], ep0 = [f[f.length - 1][0] * Z + tx, f[f.length - 1][1] * Z + ty];
       var hzT = [];
-      if (chosen.stairs > 0) hzT.push("계단 " + chosen.stairs + "단"); if (chosen.steep > 0) hzT.push("급경사 " + chosen.steep + "곳"); if (chosen.nosw > 0) hzT.push("차와 같이 걷는 길"); if (chosen.unk > 0) hzT.push("정보 없는 길 " + chosen.unk + "m");
+      if (chosen.stairs > 0) hzT.push("계단 " + chosen.stairs + "단"); else if (chosen.repSt > 0) hzT.push("계단"); if (chosen.steep > 0) hzT.push("급경사 " + chosen.steep + "곳"); if (chosen.nosw > 0) hzT.push("차와 같이 걷는 길"); if (chosen.unk > 0) hzT.push("정보 없는 길 " + chosen.unk + "m");
       var lmChips = legs.map(function (g, gi) { if (!g.lm) return null; var on = started && gi === stepI, x = g.lm.x * Z + tx, y = g.lm.y * Z + ty;
         return {name: g.lm.name, style: "position: absolute; left: " + x.toFixed(1) + "px; top: " + (y - 34).toFixed(1) + "px; transform: translateX(-50%); white-space: nowrap; pointer-events: none; font-size: calc(13px * var(--fs, 1)); font-weight: 700; padding: 5px 10px; border-radius: 999px; box-shadow: 0 2px 6px rgba(25,31,28,0.2); " + (on ? "background: " + ACCENT + "; color: #FFFFFF" : "background: #FFFFFF; color: #191F1C; border: 1px solid #DCE3DF")}; }).filter(Boolean);
       var curP = posAt(legs[stepI].at), cl = legs[stepI], nl = legs[stepI + 1], remM = Math.max(0, chosen.m - Math.round(cl.at)), ev2 = elevView(chosen, 300, 6, 60);
@@ -808,11 +879,31 @@ class Component extends DCLogic {
       clearRecent: function () { try { window.localStorage.setItem("ansim.recent", "[]"); } catch (e) {} self.setState({recent: []}); },
 
       timeline: timeline, legs: chosen ? legsOf(chosen, st.start, st.dest) : [], routeRows: routeRows, routeCount: routeRows.length, dRows: dRows, elev: elev, nav: nav, isNav: st.screen === "nav" && !!chosen,
-      dMin: chosen ? chosen.min : 0, dArr: chosen ? arrStr(chosen.min) : "", dInfo: chosen ? chosen.m + "m · " + (chosen.stairs > 0 ? "계단 " + chosen.stairs + "단" : chosen.unk > 0 ? "계단 0단 (확인 전 구간 있음)" : "계단 0단") + (chosen.unk > 0 ? " · 정보 없음 " + chosen.unk + "m" : "") : "",
+      dMin: chosen ? chosen.min : 0, dArr: chosen ? arrStr(chosen.min) : "", dInfo: chosen ? chosen.m + "m · " + (chosen.stairs > 0 ? "계단 " + chosen.stairs + "단" : chosen.repSt > 0 ? "계단 있음 (주민 제보)" : chosen.unk > 0 ? "계단 0단 (확인 전 구간 있음)" : "계단 0단") + (chosen.unk > 0 ? " · 정보 없음 " + chosen.unk + "m" : "") : "",
       navToggleVoice: function () { if (st.navVoice) { try { window.speechSynthesis.cancel(); } catch (e) {} } self.setState({navVoice: !st.navVoice}); },
       navTogglePlay: function () { if (st.navPlay) self.stopTimer(); else self.runNav(); self.setState({navPlay: !st.navPlay}); },
       navEnd: function () { self.go("result", {navOpen: false, navStarted: false}); },
       navBack: function () { self.go("result", {navOpen: false, navStarted: false}); },
+      repOpen: function () { self.repOpen(); },
+      rep: (function () {
+        var r = st.rep; if (!r) return {show: false};
+        var pct = r.pct === undefined ? "" : (Math.round(r.pct * 1000) / 10) + "%";
+        return {show: true, where: r.where, isPick: r.phase === "pick", isBusy: r.phase === "busy", isAsk: r.phase === "ask", isManual: r.phase === "manual", isDone: r.phase === "done",
+          hasImg: !!r.img, img: r.img || "", msg: r.msg || "",
+          q: r.found ? "계단이 있는 것 같아요" : "계단은 보이지 않아요",
+          qSub: r.found ? "주황색으로 칠한 곳이 AI가 계단으로 본 부분이에요 (사진의 " + pct + ")" : "AI가 이 사진에서 계단을 찾지 못했어요 (계단으로 본 부분 " + pct + ")",
+          aTxt: r.found ? "맞아요, 계단이 있어요" : "맞아요, 계단 없어요", bTxt: r.found ? "아니에요, 계단 없어요" : "아니요, 계단이 있어요",
+          a: function () { self.repAnswer(!!r.found); }, b: function () { self.repAnswer(!r.found); },
+          yes: function () { self.repAnswer(true); }, no: function () { self.repAnswer(false); },
+          onFile: function (ev) { self.repFile(ev); }, close: function () { try { window.speechSynthesis.cancel(); } catch (e) {} self.setState({rep: null}); },
+          again: function () { self.setState({rep: Object.assign({}, r, {phase: "pick", img: "", pct: undefined, found: undefined})}); }};
+      })(),
+      reps: (function () {
+        var list = loadReports().slice().reverse();
+        return {has: list.length > 0, items: list.map(function (q) { var d = new Date(q.t || 0);
+          return {where: q.where || q.seg, what: (q.stairs ? "계단 있음" : "계단 없음") + (q.aiSaid === null || q.aiSaid === undefined ? " · 직접 입력" : " · AI " + (q.aiSaid === q.stairs ? "판단과 같음" : "판단을 고침")), when: (d.getMonth() + 1) + "월 " + d.getDate() + "일",
+            del: function () { self.repRemove(q.ei); }}; })};
+      })(),
       navStart: function () { self.setState({navStarted: true, navStep: 0, navOpen: false, mv: {}}); self.sayStep(0); },
       navNext: function () { var L = legsOf(chosen, st.start, st.dest), n = (st.navStep || 0) + 1; if (n >= L.length) { self.go("home", {navStarted: false, navOpen: false, q: ""}); return; } self.setState({navStep: n, mv: {}}); self.sayStep(n); },
       navPrev: function () { var n = Math.max(0, (st.navStep || 0) - 1); self.setState({navStep: n, mv: {}}); self.sayStep(n); }, navToggleSheet: function () { self.setState({navOpen: !st.navOpen}); }, navDone: function () { self.go("home", {q: ""}); },

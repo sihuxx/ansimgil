@@ -1,5 +1,5 @@
 // 오프라인에서도 열리도록 앱 파일을 저장해 두는 서비스워커
-const CACHE = "ansimgil-v13";
+const CACHE = "ansimgil-v14", AI_CACHE = "ansimgil-ai";
 const FILES = [
  "./",
  "index.html",
@@ -17,5 +17,9 @@ const FILES = [
  "icons/icon-maskable-512.png"
 ];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
-self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
-self.addEventListener("fetch", e => { e.respondWith(caches.match(e.request, {ignoreSearch: true}).then(r => r || fetch(e.request))); });
+self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== AI_CACHE).map(k => caches.delete(k))))); self.clients.claim(); });
+// AI 파일(약 40MB)은 처음 쓸 때 한 번만 내려받아 따로 저장
+self.addEventListener("fetch", e => {
+  if (e.request.url.includes("/assets/ai/")) { e.respondWith(caches.open(AI_CACHE).then(c => c.match(e.request).then(r => r || fetch(e.request).then(res => { if (res.ok) c.put(e.request, res.clone()); return res; })))); return; }
+  e.respondWith(caches.match(e.request, {ignoreSearch: true}).then(r => r || fetch(e.request)));
+});
