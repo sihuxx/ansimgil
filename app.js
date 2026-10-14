@@ -817,7 +817,10 @@ class Component extends DCLogic {
       inst: (function () {
         var standalone = false; try { standalone = window.matchMedia("(display-mode: standalone)").matches || !!window.navigator.standalone; } catch (e) {}
         var ios = /iphone|ipad|ipod/i.test(navigator.userAgent), canPrompt = !!window.__installPrompt;
-        var tip = ios ? "아이폰은 이렇게 추가해요\n① 사파리 아래쪽 공유 버튼(□↑)을 누르세요\n② '홈 화면에 추가'를 누르세요" : "브라우저에서 이렇게 추가해요\n① 오른쪽 위 점 세 개(⋮) 메뉴를 누르세요\n② '홈 화면에 추가' 또는 '앱 설치'를 누르세요";
+        var ua = navigator.userAgent, inApp = /KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp|whale/i.test(ua) && ios, iosChrome = /CriOS|EdgiOS|FxiOS/i.test(ua);
+        var tip = inApp ? "카카오톡·네이버 같은 앱 안에서 열면 추가할 수 없어요\n① 화면 아래나 위의 메뉴(⋯ 또는 공유)를 누르세요\n② '사파리로 열기' 또는 '다른 브라우저로 열기'를 누르세요\n③ 사파리에서 이 화면으로 와서 다시 눌러 주세요"
+          : ios && iosChrome ? "아이폰 크롬은 이렇게 추가해요\n① 주소창 오른쪽 공유 버튼(□↑)을 누르세요\n② 목록을 아래로 내려 '홈 화면에 추가'를 누르세요\n③ 오른쪽 위 '추가'를 누르세요"
+          : ios ? "아이폰은 사파리에서 이렇게 추가해요\n① 아래쪽 공유 버튼(□↑)을 누르세요\n   (안 보이면 주소창 옆 '⋯'를 누른 뒤 '공유')\n② 목록을 아래로 내려 '홈 화면에 추가'를 누르세요\n③ 오른쪽 위 '추가'를 누르세요\n※ 목록에 없으면 맨 아래 '작업 편집'에서 켤 수 있어요" : "브라우저에서 이렇게 추가해요\n① 오른쪽 위 점 세 개(⋮) 메뉴를 누르세요\n② '홈 화면에 추가' 또는 '앱 설치'를 누르세요";
         return {title: standalone ? "홈 화면에 추가돼 있어요" : "홈 화면에 앱 추가하기", sub: standalone ? "앱 아이콘으로 바로 열 수 있어요" : "앱처럼 아이콘을 눌러 바로 열 수 있어요",
           disabled: standalone ? "true" : "false", chev: standalone ? "none" : "block", showTip: !standalone && !!st.installTip, tip: tip,
           style: "min-height: 72px; border-radius: 18px; display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: #F3F5F4; border: none; text-align: left; color: #191F1C; cursor: " + (standalone ? "default" : "pointer"),
