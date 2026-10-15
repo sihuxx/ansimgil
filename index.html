@@ -11,6 +11,7 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="안심길">
+<meta name="format-detection" content="telephone=no, date=no, address=no, email=no">
 <style>
 @font-face{font-family:'Pretendard';src:url(assets/PretendardVariable.woff2) format('woff2');font-weight:100 900;font-display:swap}
 body{margin:0;background:#EEF1EF}
@@ -20,7 +21,11 @@ button{flex-shrink:0}
 button:focus-visible,input:focus-visible{outline:3px solid #1F7A4D;outline-offset:2px}
 input::placeholder{color:#8A938D}
 html,body{height:100%;overflow:hidden}
-body{background:#FFFFFF;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+body{background:#FFFFFF;color:#191F1C;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+/* 아이폰 사파리: 색을 지정하지 않은 버튼·링크 글자가 파란색으로 보이는 문제 방지 */
+#app{color:#191F1C}
+button,label,input,select,textarea{color:inherit;-webkit-appearance:none;appearance:none}
+a,a[x-apple-data-detectors]{color:inherit !important;text-decoration:none !important}
 body.desktop{background:#EEF1EF}
 #app{position:absolute;top:0;left:0;width:390px;transform-origin:0 0;overflow:hidden}
 #app img{-webkit-user-drag:none;user-select:none}

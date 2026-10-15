@@ -29,7 +29,8 @@ G.edges.forEach(function (e, i) {
 });
 function cost(st, prof) {
   var e = st.e, c = e.len * tobler(st.rise, e.len), m = STAIR_MULT[prof] || 30;
-  if (e.stairs === "있음") c += e.len * m; else if (e.stairs === "미확인") c += e.len * m / 2;
+  // 주민 제보 계단은 크기를 모르므로 길이와 상관없이 계단 30m 정도로 계산 (긴 구간 한 곳의 작은 계단 때문에 큰 계단 길로 돌아가지 않게)
+  if (e.stairs === "있음") c += (e.rep ? Math.min(e.len, 30) : e.len) * m; else if (e.stairs === "미확인") c += e.len * m / 2;
   c += e.cross * (e.signal === "있음" ? 30 : 60);
   c += e.len * ((SWC[e.sw] || 0) + (SFC[e.sf] || 0) + (LTC[e.lt] || 0));
   if (SEGNOTE[e.seg]) c += e.len * 0.1;
